@@ -1,10 +1,11 @@
+// The Vercel Supabase integration names the public key ANON_KEY; accept either name.
+const publicKey = () => process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 export function configured() {
-  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-    && !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.startsWith('replace_');
+  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!publicKey() && !publicKey().startsWith('replace_');
 }
 export function authEnv() {
   if (!configured()) throw new Error('Supabase environment is not configured');
-  return { url: process.env.NEXT_PUBLIC_SUPABASE_URL!, key: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! };
+  return { url: process.env.NEXT_PUBLIC_SUPABASE_URL!, key: publicKey() };
 }
 export function appOrigin() {
   const origin = new URL(process.env.APP_ORIGIN || 'http://localhost:3000');
