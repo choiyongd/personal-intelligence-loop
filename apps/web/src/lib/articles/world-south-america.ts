@@ -159,7 +159,7 @@ export const articles:Article[]=[
       {title:'Vacina de dose única do Butantan contra dengue começa a ser aplicada em 17 de janeiro',publisher:'SBT News',year:'2026',url:'https://sbtnews.sbt.com.br/noticia/saude/vacina-de-dose-unica-do-butantan-contra-dengue-comeca-a-ser-aplicada-em-17-de-janeiro',kind:'보도'},
       {title:'Brazil commences nationwide vaccination after dengue virus surge',publisher:'ITIJ',year:'2024',url:'https://www.itij.com/latest/news/brazil-commences-nationwide-vaccination-after-dengue-virus-surge',kind:'보도'},
       {title:'Argentina reporta aumento de influenza A(H3N2) y mantiene el seguimiento sobre dengue y chikungunya',publisher:'ConsultorSalud',year:'2026',url:'https://consultorsalud.com/argentina-influenza-ah3n2-dengue-chikungunya/',kind:'보도'},
-      {title:'건강 칼럼: 해외여행 모기매개 감염병 예방(2025년 7월)',publisher:'서울특별시 복지분야 누리집',year:'2025',url:'https://news.seoul.go.kr/welfare/archives/572159',kind:'공식 자료'}
+      {title:'[2025년 7월호] 해외 모기매개 바이러스감염병',publisher:'서울특별시 복지분야 누리집',year:'2025',url:'https://news.seoul.go.kr/welfare/archives/572159',kind:'공식 자료'}
     ]
   },
   {

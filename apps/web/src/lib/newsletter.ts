@@ -19,11 +19,11 @@ export const continents = [
   ['EUROPE','유럽'],['N_AMERICA','북미'],['S_AMERICA','남미'],['EURASIA','유라시아'],['ASIA_PACIFIC','아시아 · 태평양'],['MIDEAST_AFRICA','중동 · 아프리카'],
 ] as const;
 export const countries = [
-  ['GB','영국','EUROPE'],['DE','독일','EUROPE'],['FR','프랑스','EUROPE'],['IT','이탈리아','EUROPE'],['ES','스페인','EUROPE'],['NL','네덜란드','EUROPE'],['SE','스웨덴','EUROPE'],['PL','폴란드','EUROPE'],['NO','노르웨이','EUROPE'],['CH','스위스','EUROPE'],['EE','에스토니아','EUROPE'],
+  ['GB','영국','EUROPE'],['DE','독일','EUROPE'],['FR','프랑스','EUROPE'],['IT','이탈리아','EUROPE'],['ES','스페인','EUROPE'],['NL','네덜란드','EUROPE'],['SE','스웨덴','EUROPE'],['PL','폴란드','EUROPE'],['NO','노르웨이','EUROPE'],['CH','스위스','EUROPE'],['EE','에스토니아','EUROPE'],['BE','벨기에','EUROPE'],['IE','아일랜드','EUROPE'],['PT','포르투갈','EUROPE'],['AT','오스트리아','EUROPE'],['FI','핀란드','EUROPE'],['DK','덴마크','EUROPE'],
   ['US','미국','N_AMERICA'],['CA','캐나다','N_AMERICA'],['MX','멕시코','N_AMERICA'],
   ['BR','브라질','S_AMERICA'],['AR','아르헨티나','S_AMERICA'],['CL','칠레','S_AMERICA'],['CO','콜롬비아','S_AMERICA'],['PE','페루','S_AMERICA'],['BO','볼리비아','S_AMERICA'],
   ['RU','러시아','EURASIA'],['KZ','카자흐스탄','EURASIA'],['TR','튀르키예','EURASIA'],['UA','우크라이나','EURASIA'],['UZ','우즈베키스탄','EURASIA'],['AZ','아제르바이잔','EURASIA'],['GE','조지아','EURASIA'],
-  ['JP','일본','ASIA_PACIFIC'],['CN','중국','ASIA_PACIFIC'],['TW','대만','ASIA_PACIFIC'],['IN','인도','ASIA_PACIFIC'],['SG','싱가포르','ASIA_PACIFIC'],['VN','베트남','ASIA_PACIFIC'],['ID','인도네시아','ASIA_PACIFIC'],['AU','호주','ASIA_PACIFIC'],
+  ['JP','일본','ASIA_PACIFIC'],['CN','중국','ASIA_PACIFIC'],['TW','대만','ASIA_PACIFIC'],['IN','인도','ASIA_PACIFIC'],['SG','싱가포르','ASIA_PACIFIC'],['VN','베트남','ASIA_PACIFIC'],['ID','인도네시아','ASIA_PACIFIC'],['PH','필리핀','ASIA_PACIFIC'],['TH','태국','ASIA_PACIFIC'],['MY','말레이시아','ASIA_PACIFIC'],['AU','호주','ASIA_PACIFIC'],
   ['AE','아랍에미리트','MIDEAST_AFRICA'],['SA','사우디아라비아','MIDEAST_AFRICA'],['IL','이스라엘','MIDEAST_AFRICA'],['ZA','남아프리카공화국','MIDEAST_AFRICA'],['NG','나이지리아','MIDEAST_AFRICA'],['EG','이집트','MIDEAST_AFRICA'],['KE','케냐','MIDEAST_AFRICA'],
 ] as const;
 type Topic=readonly [string,string,string];

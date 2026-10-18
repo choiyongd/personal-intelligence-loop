@@ -79,7 +79,7 @@ export const articles:Article[]=[
       {title:'EU Commission imposes countervailing duties on imports of battery electric vehicles (BEVs) from China',publisher:'European Commission, Access2Markets',year:'2024',url:'https://trade.ec.europa.eu/access-to-markets/en/news/eu-commission-imposes-countervailing-duties-imports-battery-electric-vehicles-bevs-china',kind:'공식 자료'},
       {title:'Battery-electric cars dominate Norway – and its fleets',publisher:'electrive',year:'2026',url:'https://www.electrive.com/2026/01/03/battery-electric-cars-dominate-norway-and-its-fleets',kind:'보도'},
       {title:'Hyundai, Kia sell over 100,000 EVs in Europe in H1',publisher:'The Korea Times',year:'2026',url:'https://koreatimes.co.kr/business/companies/20260802/hyundai-kia-sell-over-100000-evs-in-europe-in-h1',kind:'보도'},
-      {title:'Korean battery makers lose EU market share to Chinese rivals (Asia Today report)',publisher:'UPI',year:'2026',url:'https://www.upi.com/Top_News/World-News/2026/09/02/batteries-eu-china/6081788395075/',kind:'보도'}
+      {title:'[아시아투데이 기사 영문판, 2026년 9월 2일] 한국 배터리 3사 유럽 점유율 2023년 60.4%→2025년 약 30%',publisher:'UPI · 아시아투데이',year:'2026',url:'https://www.upi.com/Top_News/World-News/2026/09/02/batteries-eu-china/6081788395075/',kind:'보도'}
     ]
   },
   {
