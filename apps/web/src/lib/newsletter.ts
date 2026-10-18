@@ -74,7 +74,7 @@ export function selectionFromQuery(p:Record<string,string|string[]|undefined>):N
 export type NewsletterStory = {
   id:string; title:string; description?:string; industry:IndustryId|'unknown'; topics:string[]; countries:string[];
   type:keyof typeof contentLabels; source:string; date:string; url?:string; eventId?:string; tenant?:string; evidence:{source:string;url:string;title:string}[];
-  href?:string; sourceCount?:number; questions?:string[];
+  href?:string; sourceCount?:number; questions?:string[]; hot?:{rank:number;reason:string};
 };
 function matchesTerm(text:string,term:string){
   const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');

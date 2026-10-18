@@ -31,3 +31,10 @@ for(const a of articles){
     for(const p of a.pages)assert.ok(p.paragraphs.length>=2&&p.easy.length>0,`page ${p.heading}`);
   });
 }
+test('every global hot pick points at an existing explainer',async()=>{
+  const source=await readFile(new URL('../apps/web/src/lib/articles/hot.ts',import.meta.url),'utf8');
+  const out=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+  const m={exports:{}};new Function('require','module','exports',out)(createRequire(import.meta.url),m,m.exports);
+  assert.ok(m.exports.hotPicks.length>=m.exports.HOT_PER_EDITION*2,'enough picks to rotate');
+  for(const h of m.exports.hotPicks)assert.ok(articles.some(a=>a.id===h.id&&a.regions.includes('GLOBAL')),h.id);
+});

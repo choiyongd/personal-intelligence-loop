@@ -1,6 +1,6 @@
 import 'server-only';
 import {admin,createIssue,dueReaders,type Reader} from './beta-store';
-import {articleById,type Article} from './articles';
+import {articleById,hotFor,type Article} from './articles';
 import {appOrigin} from './env';
 import {kstNow} from './kst';
 import {sendMail} from './mailer';
@@ -25,7 +25,8 @@ export async function dispatchDue(now=new Date()){
       const articles=issue.article_ids.map(articleById).filter((a):a is Article=>Boolean(a));
       if(!articles.length||!reader.email)throw new Error('no-articles-or-email');
       const origin=appOrigin(),unsub=unsubscribeUrl(reader);
-      const mail=renderIssueEmail({selection:issue.selectionParsed,articles,origin,readerName:reader.name,unsubscribeUrl:unsub,archiveUrl:`${origin}/my/archive`,
+      const hotIds=hotFor(issue.selectionParsed,issue.article_ids).map(h=>h.id);
+      const mail=renderIssueEmail({selection:issue.selectionParsed,articles,hotIds,origin,readerName:reader.name,unsubscribeUrl:unsub,archiveUrl:`${origin}/my/archive`,
         dateLabel:new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(now)});
       await sendMail({to:reader.email,...mail,headers:{'List-Unsubscribe':`<${unsub}>`,'List-Unsubscribe-Post':'List-Unsubscribe=One-Click'}});
       await admin().from('beta_issues').update({delivery:'sent',sent_at:new Date().toISOString(),last_error:null}).eq('id',issue.id);

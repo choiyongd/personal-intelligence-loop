@@ -7,6 +7,8 @@ import {articles as design} from './design';
 import {allTopics,industries,selectedCountries,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
 
 export type {Article} from './types';
+import {hotPicks,HOT_PER_EDITION} from './hot';
+export {HOT_BASIS,hotPicks,HOT_PER_EDITION} from './hot';
 export const allArticles:Article[]=[...technology,...businessFinance,...scienceHealth,...energyPolicy,...design];
 export function articleById(id:string){return allArticles.find(a=>a.id===id);}
 const articleTopicField=new Map(industries.flatMap(i=>i.topics.map(t=>[t[0] as string,i.id as string] as const)));
@@ -33,5 +35,17 @@ export function articleStory(a:Article,level:Level):NewsletterStory{
     evidence:a.sources.map(src=>({source:src.publisher,url:src.url,title:src.title})),
   };
 }
-export function articleStories(s:NewsletterSelection){return articlesFor(s).map(a=>articleStory(a,s.level));}
+// World editions always open with the top hot picks, even when they sit outside the chosen fields.
+export function hotFor(s:NewsletterSelection,ids?:string[]){
+  if(s.scope!=='global')return [];
+  // Saved issues store their hot picks first, so read them back from the head of the id list.
+  const pool=ids?ids.slice(0,HOT_PER_EDITION).map(id=>hotPicks.find(h=>h.id===id)).filter((h):h is typeof hotPicks[number]=>Boolean(h)):hotPicks.slice(0,HOT_PER_EDITION);
+  return pool.map(h=>({...h,article:articleById(h.id)!,rank:hotPicks.indexOf(h)+1})).filter(h=>h.article);
+}
+export function editionStories(s:NewsletterSelection,ids?:string[]){
+  const hot=hotFor(s,ids);
+  const rest=(ids?ids.map(articleById).filter((a):a is Article=>Boolean(a)):articlesFor(s)).filter(a=>!hot.some(h=>h.id===a.id));
+  return [...hot.map(h=>({...articleStory(h.article,s.level),hot:{rank:h.rank,reason:h.reason}})),...rest.map(a=>articleStory(a,s.level))];
+}
+export function articleStories(s:NewsletterSelection){return editionStories(s);}
 export function topicLabel(id:string){return allTopics.find(t=>t[0]===id)?.[1]||id;}

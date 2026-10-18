@@ -2,15 +2,17 @@ import {contentLabels,countryName,industryFor,levelLabel,regionLabel,scheduleLab
 import type {Article} from './articles';
 
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-const font="font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;";
-const serif="font-family:Georgia,'Nanum Myeongjo',Batang,serif;";
+const font="font-family:'Pretendard Variable',Pretendard,'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;";
+// Article type is Pretendard; mail clients that cannot load it fall back to the system Korean sans.
+const serif="font-family:'Pretendard Variable',Pretendard,'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;";
 
 // Table layout with inline styles: mail clients ignore stylesheets and most modern CSS.
-export function renderIssueEmail({selection,articles,origin,dateLabel,readerName,unsubscribeUrl,archiveUrl}:{selection:NewsletterSelection;articles:Article[];origin:string;dateLabel:string;readerName:string;unsubscribeUrl:string;archiveUrl:string}){
+export function renderIssueEmail({selection,articles,hotIds=[],origin,dateLabel,readerName,unsubscribeUrl,archiveUrl}:{selection:NewsletterSelection;articles:Article[];hotIds?:string[];origin:string;dateLabel:string;readerName:string;unsubscribeUrl:string;archiveUrl:string}){
   const link=(a:Article)=>`${origin}/article/${a.id}?level=${selection.level}`;
   const cat=(a:Article)=>`${contentLabels[a.type]} · ${industryFor(a.industry).label}${a.regions.filter(r=>r!=='GLOBAL').length?' · '+a.regions.filter(r=>r!=='GLOBAL').slice(0,3).map(countryName).join(', '):''}`;
   const [lead,...rest]=articles;
-  const card=(a:Article)=>`<tr><td style="padding:0 0 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#12385f;border-radius:6px"><tr><td style="padding:18px 20px;${font}"><div style="font-size:12px;color:#a9c6e6">${esc(cat(a))}</div><a href="${link(a)}" style="display:block;margin:6px 0 8px;font-size:17px;line-height:1.45;font-weight:700;color:#ffffff;text-decoration:none">${esc(a.title)}</a><div style="font-size:14px;line-height:1.6;color:#d3e1f0">${esc(a.dek)}</div></td></tr></table></td></tr>`;
+  const hotBadge=(a:Article)=>hotIds.includes(a.id)?`<span style="display:inline-block;background:#e4572e;color:#ffffff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-right:6px">세계의 화제</span>`:'';
+  const card=(a:Article)=>`<tr><td style="padding:0 0 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#12385f;border-radius:6px"><tr><td style="padding:18px 20px;${font}"><div style="font-size:12px;color:#a9c6e6">${hotBadge(a)}${esc(cat(a))}</div><a href="${link(a)}" style="display:block;margin:6px 0 8px;font-size:17px;line-height:1.45;font-weight:700;color:#ffffff;text-decoration:none">${esc(a.title)}</a><div style="font-size:14px;line-height:1.6;color:#d3e1f0">${esc(a.dek)}</div></td></tr></table></td></tr>`;
   const html=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(selection.name)}</title></head>
 <body style="margin:0;padding:0;background:#eef2f7">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7"><tr><td align="center" style="padding:24px 12px">
@@ -20,7 +22,7 @@ export function renderIssueEmail({selection,articles,origin,dateLabel,readerName
 <div style="margin-top:22px;font-size:11px;letter-spacing:3px;color:#a9c6e6">${selection.cadence==='daily'?'DAILY':'WEEKLY'} BRIEF · ${esc(regionLabel(selection))}</div>
 <div style="${serif}font-size:38px;line-height:1.15;color:#ffffff;margin:8px 0 10px">${esc(selection.name)}</div>
 <div style="font-size:13px;color:#cfe0f3">${esc(readerName)}님을 위해 고른 ${articles.length}편</div></td></tr>
-<tr><td style="padding:26px 28px 6px;${font}"><div style="font-size:12px;font-weight:700;color:#1d5fd1;letter-spacing:1px">이번 호 머리기사</div><div style="font-size:12px;color:#556372;margin-top:4px">${esc(cat(lead))}</div>
+<tr><td style="padding:26px 28px 6px;${font}"><div style="font-size:12px;font-weight:700;color:#1d5fd1;letter-spacing:1px">${hotBadge(lead)}이번 호 머리기사</div><div style="font-size:12px;color:#556372;margin-top:4px">${esc(cat(lead))}</div>
 <a href="${link(lead)}" style="display:block;${serif}font-size:26px;line-height:1.3;font-weight:700;color:#12385f;text-decoration:none;margin:8px 0 12px">${esc(lead.title)}</a>
 <div style="font-size:15px;line-height:1.75;color:#2c3a49">${esc(lead.dek)}</div>
 <div style="font-size:12px;color:#556372;margin-top:10px">출처 ${lead.sources.length}개 · ${esc(lead.asOf)} 기준</div>

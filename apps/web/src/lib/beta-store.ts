@@ -4,7 +4,7 @@ import {cookies} from 'next/headers';
 import {createClient,type SupabaseClient} from '@supabase/supabase-js';
 import {z} from 'zod';
 import {newsletterSelectionSchema,type NewsletterSelection} from './newsletter';
-import {articlesFor} from './articles';
+import {articlesFor,hotPicks,HOT_PER_EDITION} from './articles';
 import {kstNow} from './kst';
 
 // The reader cookie is "<id>.<secret>"; only a SHA-256 of the secret is stored.
@@ -69,8 +69,11 @@ export async function pickArticles(readerId:string,selection:NewsletterSelection
   const {data}=await admin().from('beta_issues').select('article_ids,created_at').eq('reader_id',readerId).order('created_at',{ascending:false}).limit(60);
   const lastUsed=new Map<string,number>();
   (data||[]).forEach((row,i)=>(row.article_ids as string[]).forEach(id=>{if(!lastUsed.has(id))lastUsed.set(id,i);}));
-  return candidates.map((id,order)=>({id,order,age:lastUsed.has(id)?lastUsed.get(id)!:Infinity}))
-    .sort((a,b)=>b.age-a.age||a.order-b.order).slice(0,count).map(x=>x.id);
+  const rotate=(ids:string[])=>ids.map((id,order)=>({id,order,age:lastUsed.has(id)?lastUsed.get(id)!:Infinity}))
+    .sort((a,b)=>b.age-a.age||a.order-b.order).map(x=>x.id);
+  // World editions lead with two hot picks, rotated by rank among the least recently sent.
+  const hot=selection.scope==='global'?rotate(hotPicks.map(h=>h.id)).slice(0,HOT_PER_EDITION):[];
+  return [...hot,...rotate(candidates.filter(id=>!hot.includes(id)))].slice(0,count);
 }
 const issueRow=z.object({id:z.uuid(),kind:z.enum(['scheduled','manual']),issue_date:z.string(),title:z.string(),selection:z.unknown(),article_ids:z.array(z.string()),delivery:z.enum(['saved','pending','sent','failed']),attempts:z.number(),created_at:z.string(),sent_at:z.string().nullable()});
 export type Issue=z.infer<typeof issueRow>&{selectionParsed:NewsletterSelection};

@@ -26,6 +26,8 @@ test('personalization wizard and newsletter retain selected country in the editi
   const html=await paper.text();assert.equal(paper.status,200);
   assert.match(html,/Japan Research/);assert.match(html,/일본/);assert.match(html,/WEEKLY/);
   assert.match(html,/실시간 뉴스가 아니라/);assert.match(html,/href="\/article\/ai-explainer\?level=practitioner"/);
+  const world=await (await fetch(`${origin}/newsletter?industries=design&topics=culture&scope=global&types=article&name=W`)).text();
+  assert.equal((world.match(/세계의 화제 \d위/g)||[]).length>=2,true);assert.match(world,/culture-explainer/);
 });
 test('beta entry needs no account and the explainer cites its sources',async()=>{
   const login=await (await fetch(`${origin}/login`)).text();
