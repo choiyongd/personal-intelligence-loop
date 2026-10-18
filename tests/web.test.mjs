@@ -2,9 +2,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 const origin=process.env.PIL_WEB_ORIGIN||'http://127.0.0.1:3000';
-test('synthetic preview renders clearly labeled content without credentials',async()=>{
+test('public preview renders clearly labeled editorial content without credentials',async()=>{
   const response=await fetch(`${origin}/demo`);assert.equal(response.status,200);
-  assert.match(await response.text(),/실제 뉴스가 아닙니다/);
+  assert.match(await response.text(),/실시간 뉴스가 아니라/);
   assert.equal(response.headers.get('x-content-type-options'),'nosniff');
   assert.equal(response.headers.get('x-frame-options'),'DENY');
 });
