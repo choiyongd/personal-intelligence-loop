@@ -1,0 +1,20 @@
+# Calls the app's dispatch endpoint every hour; the app decides who is due in Korea time.
+# Repository secrets needed: DISPATCH_URL (e.g. https://your-app.vercel.app/api/dispatch) and CRON_SECRET.
+name: newsletter-dispatch
+on:
+  schedule:
+    - cron: '2 * * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call dispatch endpoint
+        env:
+          DISPATCH_URL: ${{ secrets.DISPATCH_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$DISPATCH_URL" ] || [ -z "$CRON_SECRET" ]; then echo "DISPATCH_URL/CRON_SECRET not set; skipping."; exit 0; fi
+          curl --fail-with-body -sS -X POST --retry 3 --retry-all-errors --max-time 120 -H "Authorization: Bearer $CRON_SECRET" "$DISPATCH_URL"

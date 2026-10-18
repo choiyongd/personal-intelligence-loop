@@ -7,6 +7,7 @@ const root=new URL('../',import.meta.url);
 const migration=await readFile(new URL('supabase/migrations/202610150001_core.sql',root),'utf8');
 const personalMigration=await readFile(new URL('supabase/migrations/202610170001_newsletter_profiles.sql',root),'utf8');
 const multiMigration=await readFile(new URL('supabase/migrations/202610180001_multi_select_profiles.sql',root),'utf8');
+const deliveryMigration=await readFile(new URL('supabase/migrations/202610180002_beta_delivery.sql',root),'utf8');
 const seed=await readFile(new URL('supabase/seed.sql',root),'utf8');
 const U1='11111111-1111-4111-8111-111111111111',U2='22222222-2222-4222-8222-222222222222';
 const E1='33333333-3333-4333-8333-333333333333',E2='44444444-4444-4444-8444-444444444444';
@@ -19,7 +20,7 @@ async function db(){
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;
     insert into auth.users values('${U1}'),('${U2}');`);
-  await db.exec(migration);await db.exec(personalMigration);await db.exec(multiMigration);await db.exec(seed);
+  await db.exec(migration);await db.exec(personalMigration);await db.exec(multiMigration);await db.exec(deliveryMigration);await db.exec(seed);
   return db;
 }
 async function as(db,role,uid,fn){
@@ -38,7 +39,7 @@ async function setup(db){
 test('migration enables RLS on every application table and denies anon access',async()=>{
   const d=await db();try{
     const tables=(await d.query("select relname,relrowsecurity from pg_class join pg_namespace n on n.oid=relnamespace where n.nspname='public' and relkind='r'")).rows;
-    assert.equal(tables.length,13);assert.ok(tables.every(t=>t.relrowsecurity));
+    assert.equal(tables.length,15);assert.ok(tables.every(t=>t.relrowsecurity));
     await as(d,'anon','',async()=>{await assert.rejects(d.query('select * from public.events'),/permission denied/);await assert.rejects(d.query("select public.create_workspace('X')"),/permission denied/);});
   }finally{await d.close();}
 });
@@ -153,6 +154,20 @@ test('profiles accept several fields, topics and countries but only from the sel
       await assert.rejects(d.query("update public.newsletter_profiles set countries=array['US','XX'] where user_id=$1",[U1]),/check constraint/);
       const moved=(await d.query("update public.newsletter_profiles set industries=array['energy'],subtopics=array['battery'] where user_id=$1 returning industry",[U1])).rows[0];
       assert.equal(moved.industry,'energy');
+    });
+  }finally{await d.close();}
+});
+
+test('beta reader tables are server-only and one scheduled issue exists per reader per day',async()=>{
+  const d=await db();try{
+    const reader=(await d.query("insert into public.beta_readers(token_hash,selection,unsubscribe_token) values(repeat('a',64),'{}'::jsonb,repeat('u',32)) returning id")).rows[0].id;
+    const issue=`insert into public.beta_issues(reader_id,kind,issue_date,title,selection,article_ids) values($1,'scheduled','2026-10-18','Brief','{}'::jsonb,array['ai-explainer'])`;
+    await d.query(issue,[reader]);
+    await assert.rejects(d.query(issue,[reader]),/unique constraint/);
+    await assert.rejects(d.query("update public.beta_readers set delivery_enabled=true where id=$1",[reader]),/check constraint/);
+    for(const role of ['anon','authenticated'])await as(d,role,role==='authenticated'?U1:'',async()=>{
+      await assert.rejects(d.query('select * from public.beta_readers'),/permission denied/);
+      await assert.rejects(d.query('select * from public.beta_issues'),/permission denied/);
     });
   }finally{await d.close();}
 });

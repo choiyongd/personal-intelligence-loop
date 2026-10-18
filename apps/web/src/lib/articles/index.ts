@@ -4,16 +4,20 @@ import {articles as businessFinance} from './business-finance';
 import {articles as scienceHealth} from './science-health';
 import {articles as energyPolicy} from './energy-policy';
 import {articles as design} from './design';
-import {allTopics,selectedCountries,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
+import {allTopics,industries,selectedCountries,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
 
 export type {Article} from './types';
 export const allArticles:Article[]=[...technology,...businessFinance,...scienceHealth,...energyPolicy,...design];
 export function articleById(id:string){return allArticles.find(a=>a.id===id);}
+const articleTopicField=new Map(industries.flatMap(i=>i.topics.map(t=>[t[0] as string,i.id as string] as const)));
 
 // Field and topic decide what is in the edition; region only decides the order, so a narrow region never empties it.
 export function articlesFor(s:NewsletterSelection){
   const fields=s.industries as string[];
-  const inScope=allArticles.filter(a=>fields.includes(a.industry)&&(s.subtopics.length===0||s.subtopics.includes(a.topic)));
+  // A field with none of its own topics picked contributes all its topics, so adding a field always adds reading.
+  const fieldTopics=(field:string)=>allTopics.filter(t=>articleTopicField.get(t[0])===field).map(t=>t[0]);
+  const narrowed=new Set(fields.filter(f=>fieldTopics(f).some(t=>s.subtopics.includes(t))));
+  const inScope=allArticles.filter(a=>fields.includes(a.industry)&&(!narrowed.has(a.industry)||s.subtopics.includes(a.topic)));
   const typed=inScope.filter(a=>s.contentTypes.includes(a.type));
   const pool=typed.length?typed:inScope;
   const wanted=selectedCountries(s);

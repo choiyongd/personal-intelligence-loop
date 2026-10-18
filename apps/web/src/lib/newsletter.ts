@@ -39,6 +39,9 @@ export const newsletterSelectionSchema = z.object({
   name: z.string().trim().min(1,'뉴스레터 이름을 입력하세요.').max(60,'이름은 60자 이내로 입력하세요.').default('나의 데일리 브리프'),
   cadence: z.enum(['daily','weekly']).default('daily'),
   level: z.enum(['intro','practitioner','expert']).default('practitioner'),
+  // Delivery time in Korea time; weekday 0=일요일 is used only for weekly editions.
+  sendHour: z.coerce.number().int().min(0).max(23).default(7),
+  sendWeekday: z.coerce.number().int().min(0).max(6).default(1),
 }).superRefine((value,ctx)=>{
   const validTopics = industries.filter(i=>(value.industries as string[]).includes(i.id)).flatMap(i=>i.topics.map(t=>t[0] as string));
   if(value.subtopics.some(t=>!validTopics.includes(t))) ctx.addIssue({code:'custom',message:'선택한 분야에 맞는 세부 주제를 고르세요.',path:['subtopics']});
@@ -46,7 +49,10 @@ export const newsletterSelectionSchema = z.object({
   if(new Set(value.industries).size!==value.industries.length||new Set(value.countries).size!==value.countries.length) ctx.addIssue({code:'custom',message:'같은 항목이 두 번 선택되었습니다.',path:['industries']});
 });
 export type NewsletterSelection = z.infer<typeof newsletterSelectionSchema>;
-export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner'};
+export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1};
+export const weekdays=['일','월','화','수','목','금','토'] as const;
+export function hourLabel(h:number){return `${h<12?'오전':'오후'} ${h%12===0?12:h%12}시`;}
+export function scheduleLabel(s:NewsletterSelection){return s.cadence==='daily'?`매일 ${hourLabel(s.sendHour)}`:`매주 ${weekdays[s.sendWeekday]}요일 ${hourLabel(s.sendHour)}`;}
 export function industryFor(id:string){return industries.find(i=>i.id===id)||industries[0];}
 export function industryLabel(s:NewsletterSelection){return s.industries.map(id=>industryFor(id).label).join(' · ');}
 export function levelLabel(level:Level){return levels.find(l=>l[0]===level)?.[1]||'실무';}
@@ -55,13 +61,13 @@ export function countryName(code:string){return code==='KR'?'대한민국':count
 export function regionLabel(s:NewsletterSelection){return s.scope==='global'?'전 세계':selectedCountries(s).map(countryName).join(' · ');}
 export function topicLabels(s:NewsletterSelection){return s.subtopics.map(id=>allTopics.find(t=>t[0]===id)?.[1]||id);}
 export function selectionQuery(s:NewsletterSelection){
-  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level}).toString();
+  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday)}).toString();
 }
 export function selectionFromQuery(p:Record<string,string|string[]|undefined>):NewsletterSelection{
   const get=(key:string,fallback:string)=>typeof p[key]==='string'?p[key] as string:fallback;
   const list=(key:string,legacy:string,fallback:string)=>get(key,get(legacy,fallback)).split(',').filter(Boolean);
   const fresh=p.industries===undefined&&p.industry===undefined;
-  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner')});
+  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1')});
   return parsed.success?parsed.data:defaultSelection;
 }
 

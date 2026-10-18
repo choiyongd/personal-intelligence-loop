@@ -8,6 +8,7 @@ import { context } from '@/lib/data';
 import {newsletterSelectionSchema} from '@/lib/newsletter';
 import {cookies} from 'next/headers';
 import {BETA_COOKIE,DRAFT_COOKIE} from '@/lib/beta';
+import {READER_COOKIE} from '@/lib/beta-store';
 
 const id = z.uuid();
 function value(form:FormData,name:string) {return String(form.get(name)||'');}
@@ -105,6 +106,6 @@ export async function startBeta(form:FormData){
 }
 export async function endBeta(){
   const jar=await cookies();
-  jar.delete(BETA_COOKIE);jar.delete(DRAFT_COOKIE);
+  jar.delete(BETA_COOKIE);jar.delete(DRAFT_COOKIE);jar.delete(READER_COOKIE);
   redirect('/');
 }
