@@ -35,6 +35,21 @@ export function articlesFor(s:NewsletterSelection){
   }
   return spreadAcrossContinents(pool);
 }
+function rotate<T>(list:T[],by:number){if(!list.length)return list;const k=((by%list.length)+list.length)%list.length;return [...list.slice(k),...list.slice(0,k)];}
+// One edition's article ids, decided only by the selection, its size and a seed (issue date and slot),
+// so the inbox, a re-read and the emailed copy of the same issue always agree without storing anything.
+export function pickEdition(s:NewsletterSelection,size:number,seed:number){
+  const hot=s.scope==='global'?rotate(hotPicks.map(h=>h.id),seed*HOT_PER_EDITION).slice(0,HOT_PER_EDITION):[];
+  const rest=articlesFor(s).filter(a=>!hot.includes(a.id));
+  const wanted=selectedCountries(s);
+  // Region matches stay ahead of the rest; each group turns by the seed so every new edition opens differently.
+  const near=wanted.length?rest.filter(a=>a.regions.some(r=>wanted.includes(r))):rest;
+  const far=wanted.length?rest.filter(a=>!near.includes(a)):[];
+  const step=Math.max(1,size-hot.length);
+  return [...hot,...rotate(near,seed*step).map(a=>a.id),...rotate(far,seed*step).map(a=>a.id)].slice(0,size);
+}
+// Day number since 2026-01-01 in Korea time; editions on the same day differ by slot.
+export function editionSeed(date:string,slot=0){return Math.round((Date.parse(`${date}T00:00:00Z`)-Date.UTC(2026,0,1))/864e5)*4+slot;}
 // World editions take turns between continents, so one region's stories never crowd out the others.
 function homeContinent(a:Article){const r=a.regions.find(x=>x!=='GLOBAL'&&x!=='KR');return (r&&continentOf(r))||'ASIA_PACIFIC';}
 function spreadAcrossContinents(pool:Article[]){
@@ -49,7 +64,7 @@ export function articleStory(a:Article,level:Level):NewsletterStory{
   return {
     id:a.id,title:a.title,description:a.dek,industry:a.industry,topics:[a.topic],countries:a.regions.filter(r=>r!=='GLOBAL'),
     type:a.type,source:publishers.slice(0,2).join(' · ')+(publishers.length>2?` 외 ${publishers.length-2}곳`:''),date:`${a.asOf}T00:00:00+09:00`,
-    href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,
+    href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,thoughts:a.thoughts,
     evidence:a.sources.map(src=>({source:src.publisher,url:src.url,title:src.title})),
   };
 }

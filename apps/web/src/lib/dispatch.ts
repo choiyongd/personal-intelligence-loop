@@ -26,7 +26,7 @@ export async function dispatchDue(now=new Date()){
       if(!articles.length||!reader.email)throw new Error('no-articles-or-email');
       const origin=appOrigin(),unsub=unsubscribeUrl(reader);
       const hotIds=hotFor(issue.selectionParsed,issue.article_ids).map(h=>h.id);
-      const mail=renderIssueEmail({selection:issue.selectionParsed,articles,hotIds,origin,readerName:reader.name,unsubscribeUrl:unsub,archiveUrl:`${origin}/my/archive`,
+      const mail=renderIssueEmail({selection:issue.selectionParsed,articles,hotIds,origin,readerName:reader.name,unsubscribeUrl:unsub,archiveUrl:`${origin}/my/inbox/s-${issue.issue_date.replaceAll('-','')}`,
         dateLabel:new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(now)});
       await sendMail({to:reader.email,...mail,headers:{'List-Unsubscribe':`<${unsub}>`,'List-Unsubscribe-Post':'List-Unsubscribe=One-Click'}});
       await admin().from('beta_issues').update({delivery:'sent',sent_at:new Date().toISOString(),last_error:null}).eq('id',issue.id);

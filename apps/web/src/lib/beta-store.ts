@@ -3,8 +3,8 @@ import {createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {cookies} from 'next/headers';
 import {createClient,type SupabaseClient} from '@supabase/supabase-js';
 import {z} from 'zod';
-import {newsletterSelectionSchema,type NewsletterSelection} from './newsletter';
-import {articlesFor,hotPicks,HOT_PER_EDITION} from './articles';
+import {newsletterSelectionSchema,plans,type NewsletterSelection} from './newsletter';
+import {articlesFor,editionSeed,hotPicks,HOT_PER_EDITION,pickEdition} from './articles';
 import {kstNow} from './kst';
 
 // The reader cookie is "<id>.<secret>"; only a SHA-256 of the secret is stored.
@@ -52,8 +52,8 @@ export async function ensureReader(name:string,selection:NewsletterSelection){
   return toReader(data);
 }
 export async function dueReaders(hour:number){
-  // Readers whose hour has already come today; a delayed or missed hourly run still catches them the same day.
-  const {data,error}=await admin().from('beta_readers').select(readerColumns).eq('delivery_enabled',true).lte('send_hour',hour).order('send_hour').limit(500);
+  // Subscribers whose hour has already come today; a delayed or missed hourly run still catches them the same day.
+  const {data,error}=await admin().from('beta_readers').select(readerColumns).eq('delivery_enabled',true).eq('plan','subscriber').lte('send_hour',hour).order('send_hour').limit(500);
   if(error)throw new Error('발송 대상을 불러오지 못했습니다.');
   return (data||[]).map(toReader);
 }
@@ -86,7 +86,8 @@ export async function createIssue(reader:Pick<Reader,'id'|'selectionParsed'>,kin
   const date=kstNow(now).date,s=reader.selectionParsed;
   const found=await admin().from('beta_issues').select(issueColumns).eq('reader_id',reader.id).eq('kind',kind).eq('issue_date',date).maybeSingle();
   if(found.data)return {issue:toIssue(found.data),created:false};
-  const articleIds=await pickArticles(reader.id,s,issueSize(s));
+  // Scheduled editions use the same date-seeded pick as the in-app inbox, so the mail and the inbox copy match.
+  const articleIds=kind==='scheduled'?pickEdition(s,plans.subscriber.stories,editionSeed(date,0)):await pickArticles(reader.id,s,issueSize(s));
   if(articleIds.length===0)return {issue:null,created:false};
   const {data,error}=await admin().from('beta_issues').insert({reader_id:reader.id,kind,issue_date:date,title:s.name,selection:s,article_ids:articleIds,delivery})
     .select(issueColumns).single();

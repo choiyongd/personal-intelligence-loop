@@ -1,17 +1,22 @@
 import { z } from 'zod';
 
 export const industries = [
-  { id:'technology', label:'기술 · AI', description:'다음 변화를 만드는 기술', icon:'◈', terms:['AI','artificial intelligence','technology','model','software','인공지능','기술','모델'], topics:[['ai','인공지능','AI,artificial intelligence,model,인공지능,모델'],['semiconductor','반도체','semiconductor,chip,반도체'],['robotics','로보틱스','robot,robotics,로봇'],['software','소프트웨어','software,developer,소프트웨어,개발'],['cybersecurity','사이버 보안','security,cyber,해킹,보안'],['quantum','양자 기술','quantum,양자']] },
-  { id:'business', label:'비즈니스', description:'기업과 시장의 새로운 움직임', icon:'↗', terms:['business','startup','company','기업','스타트업'], topics:[['startup','스타트업','startup,스타트업'],['strategy','기업 전략','strategy,business,전략'],['commerce','커머스','commerce,retail,커머스,유통'],['supply-chain','공급망 · 무역','supply chain,trade,공급망,관세'],['labor','일자리 · 노동','labor,work,노동,일자리']] },
-  { id:'science', label:'과학 · 연구', description:'발견과 실험, 지식의 최전선', icon:'✳', terms:['research','science','study','연구','과학'], topics:[['space','우주','space,satellite,우주,위성'],['materials','신소재','material,신소재'],['biology','생명과학','biology,genome,생명,유전체'],['physics','기초과학 · 물리','physics,particle,물리,입자'],['earth','지구 · 환경과학','earth,forest,ecosystem,지구,생태']] },
-  { id:'energy', label:'에너지 · 기후', description:'지속 가능한 전환을 읽는 시선', icon:'☼', terms:['energy','climate','battery','에너지','기후','배터리'], topics:[['battery','배터리','battery,storage,배터리,저장'],['renewables','재생에너지','renewable,solar,재생에너지,태양광'],['climate','기후 정책','climate,carbon,기후,탄소'],['nuclear','원자력','nuclear,uranium,원전,원자력'],['critical-minerals','핵심 광물','lithium,mineral,리튬,광물']] },
-  { id:'health', label:'헬스케어', description:'건강과 의료의 새로운 가능성', icon:'+', terms:['health','medical','clinical','의료','건강','헬스'], topics:[['digital-health','디지털 헬스','digital health,health data,디지털 헬스,의료 데이터'],['biotech','바이오','biotech,genome,바이오'],['medicine','임상 · 의약','clinical,medicine,임상,의약'],['public-health','공중보건','public health,epidemic,감염병,공중보건'],['aging','고령화 · 돌봄','aging,care,고령화,돌봄']] },
-  { id:'finance', label:'경제 · 금융', description:'돈의 흐름과 경제의 방향', icon:'◎', terms:['finance','economic','market','bank','금융','경제','금리'], topics:[['economy','거시경제','economy,economic,경제'],['fintech','핀테크','fintech,payment,핀테크,결제'],['investment','투자','investment,market,투자,증시'],['crypto','디지털 자산','crypto,stablecoin,가상자산,스테이블코인'],['realestate','부동산 · 주거','housing,real estate,부동산,주거']] },
-  { id:'design', label:'디자인 · 문화', description:'사람과 경험을 바꾸는 생각', icon:'✦', terms:['design','culture','디자인','문화'], topics:[['product-design','제품 디자인','design,디자인'],['creative','크리에이티브','creative,creator,창작,크리에이터'],['culture','문화 트렌드','culture,trend,문화,트렌드'],['architecture','건축 · 도시','architecture,building,건축,도시'],['media','미디어 · 콘텐츠','media,streaming,미디어,스트리밍']] },
-  { id:'policy', label:'정책 · 사회', description:'제도와 사회 변화의 맥락', icon:'≡', terms:['policy','regulation','rule','government','정책','규제','사회'], topics:[['regulation','규제 · 법제','regulation,rule,규제,법제'],['society','사회 변화','society,사회'],['international','국제 관계','international,trade,국제,무역'],['security','안보 · 국방','defence,security,안보,국방'],['migration','이주 · 인구','migration,population,이주,인구']] },
-  { id:'mobility', label:'모빌리티', description:'이동 방식이 바뀌는 현장', icon:'➶', terms:['mobility','vehicle','EV','aviation','모빌리티','전기차','항공'], topics:[['ev','전기차','EV,electric vehicle,전기차'],['aviation','항공 · 우주항공','aviation,airline,항공'],['autonomous','자율주행','autonomous,robotaxi,자율주행']] },
-  { id:'food', label:'식품 · 농업', description:'먹거리와 식량의 지도', icon:'❦', terms:['food','agriculture','grain','식품','농업','식량'], topics:[['agriculture','농업 · 식량','agriculture,grain,crop,농업,식량,곡물'],['foodtech','푸드테크','foodtech,cultivated meat,대체육,푸드테크']] },
-  { id:'education', label:'교육', description:'배우는 방식과 길의 변화', icon:'✎', terms:['education','school','university','교육','학교','대학'], topics:[['edtech','에듀테크 · AI 교육','edtech,AI education,에듀테크,교육'],['higher-ed','대학 · 유학','university,student,대학,유학']] },
+  { id:'technology', label:'기술 · AI', description:'다음 변화를 만드는 기술', icon:'◈', terms:['AI','artificial intelligence','technology','model','software','인공지능','기술','모델'], topics:[['ai','인공지능','AI,artificial intelligence,model,인공지능,모델'],['semiconductor','반도체','semiconductor,chip,반도체'],['robotics','로보틱스','robot,robotics,로봇'],['software','소프트웨어','software,developer,소프트웨어,개발'],['cybersecurity','사이버 보안','security,cyber,해킹,보안'],['quantum','양자 기술','quantum,양자'],['cloud','클라우드 · 데이터센터','cloud,data center,클라우드,데이터센터']] },
+  { id:'business', label:'비즈니스', description:'기업과 시장의 새로운 움직임', icon:'↗', terms:['business','startup','company','기업','스타트업'], topics:[['startup','스타트업','startup,스타트업'],['strategy','기업 전략','strategy,business,전략'],['commerce','커머스','commerce,retail,커머스,유통'],['supply-chain','공급망 · 무역','supply chain,trade,공급망,관세'],['labor','일자리 · 노동','labor,work,노동,일자리'],['esg','ESG · 지배구조','ESG,sustainability,disclosure,지속가능,공시']] },
+  { id:'science', label:'과학 · 연구', description:'발견과 실험, 지식의 최전선', icon:'✳', terms:['research','science','study','연구','과학'], topics:[['space','우주','space,satellite,우주,위성'],['materials','신소재','material,신소재'],['biology','생명과학','biology,genome,생명,유전체'],['physics','기초과학 · 물리','physics,particle,물리,입자'],['earth','지구 · 환경과학','earth,forest,ecosystem,지구,생태'],['neuroscience','뇌과학','brain,neuro,뇌과학,뇌']] },
+  { id:'energy', label:'에너지 · 기후', description:'지속 가능한 전환을 읽는 시선', icon:'☼', terms:['energy','climate','battery','에너지','기후','배터리'], topics:[['battery','배터리','battery,storage,배터리,저장'],['renewables','재생에너지','renewable,solar,재생에너지,태양광'],['climate','기후 정책','climate,carbon,기후,탄소'],['nuclear','원자력','nuclear,uranium,원전,원자력'],['critical-minerals','핵심 광물','lithium,mineral,리튬,광물'],['hydrogen','수소','hydrogen,수소']] },
+  { id:'health', label:'헬스케어', description:'건강과 의료의 새로운 가능성', icon:'+', terms:['health','medical','clinical','의료','건강','헬스'], topics:[['digital-health','디지털 헬스','digital health,health data,디지털 헬스,의료 데이터'],['biotech','바이오','biotech,genome,바이오'],['medicine','임상 · 의약','clinical,medicine,임상,의약'],['public-health','공중보건','public health,epidemic,감염병,공중보건'],['aging','고령화 · 돌봄','aging,care,고령화,돌봄'],['mental-health','정신건강','mental health,depression,정신건강,우울']] },
+  { id:'finance', label:'경제 · 금융', description:'돈의 흐름과 경제의 방향', icon:'◎', terms:['finance','economic','market','bank','금융','경제','금리'], topics:[['economy','거시경제','economy,economic,경제'],['fintech','핀테크','fintech,payment,핀테크,결제'],['investment','투자','investment,market,투자,증시'],['crypto','디지털 자산','crypto,stablecoin,가상자산,스테이블코인'],['realestate','부동산 · 주거','housing,real estate,부동산,주거'],['currency','환율 · 통화','currency,dollar,exchange rate,환율,달러']] },
+  { id:'design', label:'디자인 · 문화', description:'사람과 경험을 바꾸는 생각', icon:'✦', terms:['design','culture','디자인','문화'], topics:[['product-design','제품 디자인','design,디자인'],['creative','크리에이티브','creative,creator,창작,크리에이터'],['culture','문화 트렌드','culture,trend,문화,트렌드'],['architecture','건축 · 도시','architecture,building,건축,도시'],['media','미디어 · 콘텐츠','media,streaming,미디어,스트리밍'],['ux','UX · 서비스 디자인','UX,dark pattern,사용자 경험,다크패턴']] },
+  { id:'policy', label:'정책 · 사회', description:'제도와 사회 변화의 맥락', icon:'≡', terms:['policy','regulation','rule','government','정책','규제','사회'], topics:[['regulation','규제 · 법제','regulation,rule,규제,법제'],['society','사회 변화','society,사회'],['international','국제 관계','international,trade,국제,무역'],['security','안보 · 국방','defence,security,안보,국방'],['migration','이주 · 인구','migration,population,이주,인구'],['democracy','선거 · 민주주의','election,democracy,선거,민주주의']] },
+  { id:'mobility', label:'모빌리티', description:'이동 방식이 바뀌는 현장', icon:'➶', terms:['mobility','vehicle','EV','aviation','모빌리티','전기차','항공'], topics:[['ev','전기차','EV,electric vehicle,전기차'],['aviation','항공 · 우주항공','aviation,airline,항공'],['autonomous','자율주행','autonomous,robotaxi,자율주행'],['shipping','해운 · 물류','shipping,port,logistics,해운,물류']] },
+  { id:'food', label:'식품 · 농업', description:'먹거리와 식량의 지도', icon:'❦', terms:['food','agriculture','grain','식품','농업','식량'], topics:[['agriculture','농업 · 식량','agriculture,grain,crop,농업,식량,곡물'],['foodtech','푸드테크','foodtech,cultivated meat,대체육,푸드테크'],['food-prices','식량 가격 · 물가','food price,inflation,식량 가격,물가']] },
+  { id:'education', label:'교육', description:'배우는 방식과 길의 변화', icon:'✎', terms:['education','school','university','교육','학교','대학'], topics:[['edtech','에듀테크 · AI 교육','edtech,AI education,에듀테크,교육'],['higher-ed','대학 · 유학','university,student,대학,유학'],['k12','초중등 교육 · 입시','school,PISA,학교,입시']] },
+  { id:'entertainment', label:'엔터테인먼트 · 게임', description:'즐거움을 만드는 산업의 흐름', icon:'♫', terms:['game','music','film','게임','음악','영화','드라마'], topics:[['games','게임','game,gaming,게임'],['music','음악 · 공연','music,K-pop,음악,공연'],['film','영화 · 드라마','film,drama,box office,영화,드라마']] },
+  { id:'sports', label:'스포츠', description:'경기장 안팎의 경제와 이야기', icon:'◐', terms:['sport','football','olympic','스포츠','축구','올림픽'], topics:[['sports-business','스포츠 비즈니스','sports business,media rights,스포츠 산업'],['mega-events','월드컵 · 올림픽','World Cup,Olympics,월드컵,올림픽']] },
+  { id:'lifestyle', label:'여행 · 라이프', description:'일상과 취향이 바뀌는 방식', icon:'☾', terms:['travel','wellness','fashion','여행','웰니스','패션'], topics:[['travel','여행 · 관광','travel,tourism,여행,관광'],['wellness','웰니스 · 수면','wellness,sleep,웰니스,수면'],['fashion','패션','fashion,textile,패션,의류']] },
+  { id:'environment', label:'환경 · 생태', description:'지구의 상태를 읽는 숫자들', icon:'❀', terms:['environment','biodiversity','ocean','plastic','환경','생태','해양'], topics:[['biodiversity','생물다양성','biodiversity,species,생물다양성'],['ocean','해양','ocean,sea,해양,바다'],['pollution','플라스틱 · 오염','plastic,pollution,플라스틱,오염']] },
+  { id:'career', label:'일 · 커리어', description:'일하는 방식과 필요한 역량', icon:'⌘', terms:['career','skills','job','커리어','역량','일자리'], topics:[['skills','직무 역량 · 재교육','skills,reskilling,역량,재교육'],['remote-work','일하는 방식','remote work,hybrid,재택,하이브리드 근무']] },
 ] as const;
 
 // Selectable regions: whole continents first, then countries grouped by the continent they belong to.
@@ -43,7 +48,7 @@ export const levels=[
 export type Level=typeof levels[number][0];
 
 export const newsletterSelectionSchema = z.object({
-  industries: z.array(industryEnum).min(1,'관심 분야를 하나 이상 선택하세요.').max(11).default(['technology']),
+  industries: z.array(industryEnum).min(1,'관심 분야를 하나 이상 선택하세요.').max(16).default(['technology']),
   subtopics: z.array(z.string()).max(16,'세부 주제는 16개까지 고를 수 있어요.').default([]),
   scope: z.enum(['global','kr','country']).default('global'),
   countries: z.array(countryEnum).max(8,'대륙과 국가는 합쳐서 8개까지 고를 수 있어요.').default(['US']),
@@ -54,6 +59,7 @@ export const newsletterSelectionSchema = z.object({
   // Delivery time in Korea time; weekday 0=일요일 is used only for weekly editions.
   sendHour: z.coerce.number().int().min(0).max(23).default(7),
   sendWeekday: z.coerce.number().int().min(0).max(6).default(1),
+  theme: z.enum(['magazine','minimal','bento','night']).default('magazine'),
 }).superRefine((value,ctx)=>{
   const validTopics = industries.filter(i=>(value.industries as string[]).includes(i.id)).flatMap(i=>i.topics.map(t=>t[0] as string));
   if(value.subtopics.some(t=>!validTopics.includes(t))) ctx.addIssue({code:'custom',message:'선택한 분야에 맞는 세부 주제를 고르세요.',path:['subtopics']});
@@ -61,7 +67,18 @@ export const newsletterSelectionSchema = z.object({
   if(new Set(value.industries).size!==value.industries.length||new Set(value.countries).size!==value.countries.length) ctx.addIssue({code:'custom',message:'같은 항목이 두 번 선택되었습니다.',path:['industries']});
 });
 export type NewsletterSelection = z.infer<typeof newsletterSelectionSchema>;
-export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1};
+export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine'};
+// Newsletter looks a reader can pick; the markup is shared and each theme is a stylesheet layer.
+export const themes=[
+  ['magazine','매거진','종이 질감과 큰 제호, 주황 포인트'],
+  ['minimal','미니멀','흰 바탕과 가는 선, 글에만 집중'],
+  ['bento','벤토','둥근 카드 격자와 부드러운 색면'],
+  ['night','나이트','어두운 바탕과 선명한 강조색'],
+] as const;
+export type Theme=typeof themes[number][0];
+// Plans: a free reader gets one trial edition of up to 10 stories; a subscriber gets three fresh editions a day of up to 15.
+export const plans={free:{label:'무료',stories:10,generations:1,per:'total'},subscriber:{label:'구독',stories:15,generations:3,per:'day'}} as const;
+export type Plan=keyof typeof plans;
 export const weekdays=['일','월','화','수','목','금','토'] as const;
 export function hourLabel(h:number){return `${h<12?'오전':'오후'} ${h%12===0?12:h%12}시`;}
 export function scheduleLabel(s:NewsletterSelection){return s.cadence==='daily'?`매일 ${hourLabel(s.sendHour)}`:`매주 ${weekdays[s.sendWeekday]}요일 ${hourLabel(s.sendHour)}`;}
@@ -79,20 +96,20 @@ export function countryName(code:string){return code==='KR'?'대한민국':count
 export function regionLabel(s:NewsletterSelection){return s.scope==='global'?'전 세계':s.scope==='kr'?'대한민국':s.countries.map(countryName).join(' · ');}
 export function topicLabels(s:NewsletterSelection){return s.subtopics.map(id=>allTopics.find(t=>t[0]===id)?.[1]||id);}
 export function selectionQuery(s:NewsletterSelection){
-  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday)}).toString();
+  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday),theme:s.theme}).toString();
 }
 export function selectionFromQuery(p:Record<string,string|string[]|undefined>):NewsletterSelection{
   const get=(key:string,fallback:string)=>typeof p[key]==='string'?p[key] as string:fallback;
   const list=(key:string,legacy:string,fallback:string)=>get(key,get(legacy,fallback)).split(',').filter(Boolean);
   const fresh=p.industries===undefined&&p.industry===undefined;
-  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1')});
+  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine')});
   return parsed.success?parsed.data:defaultSelection;
 }
 
 export type NewsletterStory = {
   id:string; title:string; description?:string; industry:IndustryId|'unknown'; topics:string[]; countries:string[];
   type:keyof typeof contentLabels; source:string; date:string; url?:string; eventId?:string; tenant?:string; evidence:{source:string;url:string;title:string}[];
-  href?:string; sourceCount?:number; questions?:string[]; hot?:{rank:number;reason:string};
+  href?:string; sourceCount?:number; questions?:string[]; thoughts?:string[]; hot?:{rank:number;reason:string};
 };
 function matchesTerm(text:string,term:string){
   const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');

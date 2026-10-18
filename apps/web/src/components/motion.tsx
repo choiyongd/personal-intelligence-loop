@@ -4,7 +4,7 @@ import {usePathname} from 'next/navigation';
 
 // Elements that rise in as they scroll into view. Anything already on screen at load stays put (no flash).
 const REVEAL=['.how-columns article','.closing-note','.hero-paper-frame','.nl-cards article','.nl-more li','.nl-aside','.nl-think','.nl-foot',
-  '.explainer-page','.glossary','.sources li','.delivery-card','.archive-list li','.industry-choice','.level-choice','.region-choice'].join(',');
+  '.explainer-page','.glossary','.sources li','.delivery-card','.archive-list li','.industry-choice','.level-choice','.region-choice','.plan-card','.inbox-row','.theme-choice'].join(',');
 export function MotionLayer(){
   const pathname=usePathname();
   useEffect(()=>{
