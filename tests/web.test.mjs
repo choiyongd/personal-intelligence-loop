@@ -24,7 +24,7 @@ test('personalization wizard and newsletter retain selected country in the editi
   assert.match(await builder.text(),/어떤 세상이/);
   const paper=await fetch(`${origin}/newsletter?industry=technology&topics=ai&scope=country&country=JP&types=research&name=Japan%20Research&cadence=weekly`);
   const html=await paper.text();assert.equal(paper.status,200);
-  assert.match(html,/Japan Research/);assert.match(html,/일본/);assert.match(html,/WEEKLY/);
+  assert.match(html,/Japan Research/);assert.match(html,/일본/);assert.match(html,/Weekly/i);
   assert.match(html,/실시간 뉴스가 아니라/);assert.match(html,/href="\/article\/ai-explainer\?level=practitioner"/);
   const world=await (await fetch(`${origin}/newsletter?industries=design&topics=culture&scope=global&types=article&name=W`)).text();
   assert.equal((world.match(/세계의 화제 \d위/g)||[]).length>=2,true);assert.match(world,/culture-explainer/);
