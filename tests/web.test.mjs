@@ -25,5 +25,14 @@ test('personalization wizard and newsletter retain selected country in the editi
   const paper=await fetch(`${origin}/newsletter?industry=technology&topics=ai&scope=country&country=JP&types=research&name=Japan%20Research&cadence=weekly`);
   const html=await paper.text();assert.equal(paper.status,200);
   assert.match(html,/Japan Research/);assert.match(html,/일본/);assert.match(html,/WEEKLY/);
-  assert.match(html,/실제 뉴스가 아닙니다/);
+  assert.match(html,/실시간 뉴스가 아니라/);assert.match(html,/href="\/article\/ai-explainer\?level=practitioner"/);
+});
+test('beta entry needs no account and the explainer cites its sources',async()=>{
+  const login=await (await fetch(`${origin}/login`)).text();
+  assert.match(login,/베타로 바로 시작/);
+  assert.equal((await fetch(`${origin}/my`,{redirect:'manual'})).status,307);
+  const article=await fetch(`${origin}/article/ai-explainer?level=expert`);assert.equal(article.status,200);
+  const html=await article.text();
+  assert.match(html,/참고한 자료/);assert.match(html,/id="source-1"/);assert.match(html,/심화/);
+  assert.equal((await fetch(`${origin}/article/no-such-piece`)).status,404);
 });

@@ -11,7 +11,7 @@
     "build": "npm run build -w apps/web",
     "start": "npm run start -w apps/web",
     "preview": "npm run start -w apps/web -- --port 3100",
-    "test:newsletter": "node --test tests/newsletter.test.mjs",
+    "test:newsletter": "node --test tests/newsletter.test.mjs tests/articles.test.mjs",
     "typecheck": "npm run typecheck -w apps/web",
     "test:db": "node --test tests/database.test.mjs",
     "test:web": "node --test tests/web.test.mjs",

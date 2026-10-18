@@ -11,12 +11,15 @@ new Function('require','module','exports',output)(createRequire(import.meta.url)
 const {defaultSelection,newsletterSelectionSchema,matchesSelection,selectionFromQuery,selectionQuery}=localModule.exports;
 const story={id:'1',title:'Atlas AI evaluation model',industry:'unknown',topics:[],countries:['US'],type:'research',source:'test',date:'2026-10-17',evidence:[]};
 test('personal selection round-trips through URL without losing country, topics or types',()=>{
-  const s={...defaultSelection,scope:'country',country:'JP',name:'나의 연구 노트',contentTypes:['research']};
+  const s={...defaultSelection,industries:['technology','health'],subtopics:['ai','biotech'],scope:'country',countries:['JP','US'],name:'나의 연구 노트',contentTypes:['research'],level:'expert'};
   assert.deepEqual(selectionFromQuery(Object.fromEntries(new URLSearchParams(selectionQuery(s)))),s);
 });
 test('rejects subtopics from another parent and unsupported countries',()=>{
-  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,industry:'health',subtopics:['ai']}).success,false);
-  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,scope:'country',country:'XX'}).success,false);
+  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,industries:['health'],subtopics:['ai']}).success,false);
+  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,industries:[]}).success,false);
+  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,level:'guru'}).success,false);
+  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,scope:'country',countries:['US','XX']}).success,false);
+  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,scope:'country',countries:['US','JP','CN','GB','DE','FR']}).success,false);
   assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,contentTypes:[]}).success,false);
 });
 test('Korean edition excludes US and country-unknown stories rather than inferring language',()=>{
@@ -26,7 +29,7 @@ test('Korean edition excludes US and country-unknown stories rather than inferri
   assert.equal(matchesSelection({...story,countries:['KR']},s),true);
 });
 test('exact selected country and content type govern inclusion',()=>{
-  const s={...defaultSelection,scope:'country',country:'US',contentTypes:['research']};
+  const s={...defaultSelection,scope:'country',countries:['US'],contentTypes:['research']};
   assert.equal(matchesSelection(story,s),true);
   assert.equal(matchesSelection({...story,type:'news'},s),false);
   assert.equal(matchesSelection({...story,countries:['JP']},s),false);
@@ -37,4 +40,11 @@ test('English AI topic uses word boundaries and does not match said or paid',()=
 });
 test('malformed or injected URL selections fall back to a valid default',()=>{
   assert.deepEqual(selectionFromQuery({industry:'<script>',scope:'country',country:'XX'}),defaultSelection);
+});
+test('legacy single-field links still open, and several fields widen the match',()=>{
+  const legacy=selectionFromQuery({industry:'health',topics:'biotech',scope:'country',country:'JP'});
+  assert.deepEqual([legacy.industries,legacy.countries,legacy.level],[['health'],['JP'],'practitioner']);
+  const both={...defaultSelection,industries:['technology','health'],subtopics:[],scope:'country',countries:['US','JP']};
+  assert.equal(matchesSelection({...story,industry:'health',countries:['JP']},both),true);
+  assert.equal(matchesSelection({...story,industry:'energy'},both),false);
 });

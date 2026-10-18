@@ -15,41 +15,60 @@ export const countries = [
   ['US','미국'],['JP','일본'],['CN','중국'],['GB','영국'],['DE','독일'],['FR','프랑스'],
   ['CA','캐나다'],['AU','호주'],['SG','싱가포르'],['IN','인도'],['TW','대만'],['VN','베트남'],
 ] as const;
+type Topic=readonly [string,string,string];
+export const allTopics:readonly Topic[]=industries.flatMap(i=>i.topics as readonly Topic[]);
 export const contentLabels = { article:'기사', research:'연구', news:'소식' } as const;
 export const industryIds = industries.map(i=>i.id);
 export type IndustryId = typeof industries[number]['id'];
 
+const industryEnum=z.enum(['technology','business','science','energy','health','finance','design','policy']);
+const countryEnum=z.enum(['US','JP','CN','GB','DE','FR','CA','AU','SG','IN','TW','VN'],{message:'국가를 선택하세요.'});
+export const levels=[
+  ['intro','입문','처음 읽는 분야예요. 쉬운 설명과 용어 풀이부터.'],
+  ['practitioner','실무','일과 연결해 읽어요. 사실과 숫자 중심으로.'],
+  ['expert','심화','방법론과 쟁점까지. 한계와 논쟁을 함께.'],
+] as const;
+export type Level=typeof levels[number][0];
+
 export const newsletterSelectionSchema = z.object({
-  industry: z.enum(['technology','business','science','energy','health','finance','design','policy']),
-  subtopics: z.array(z.string()).max(6).default([]),
+  industries: z.array(industryEnum).min(1,'관심 분야를 하나 이상 선택하세요.').max(8).default(['technology']),
+  subtopics: z.array(z.string()).max(16,'세부 주제는 16개까지 고를 수 있어요.').default([]),
   scope: z.enum(['global','kr','country']).default('global'),
-  country: z.string().default('US'),
+  countries: z.array(countryEnum).max(5,'국가는 5개까지 고를 수 있어요.').default(['US']),
   contentTypes: z.array(z.enum(['article','research','news'])).min(1,'읽을거리 유형을 하나 이상 선택하세요.').max(3).default(['article','research','news']),
   name: z.string().trim().min(1,'뉴스레터 이름을 입력하세요.').max(60,'이름은 60자 이내로 입력하세요.').default('나의 데일리 브리프'),
   cadence: z.enum(['daily','weekly']).default('daily'),
+  level: z.enum(['intro','practitioner','expert']).default('practitioner'),
 }).superRefine((value,ctx)=>{
-  const validTopics = industries.find(i=>i.id===value.industry)!.topics.map(t=>t[0] as string);
-  if(value.subtopics.some(t=>!validTopics.includes(t))) ctx.addIssue({code:'custom',message:'분야에 맞는 세부 주제를 선택하세요.',path:['subtopics']});
-  if(value.scope==='country'&&!countries.some(c=>c[0]===value.country)) ctx.addIssue({code:'custom',message:'국가를 선택하세요.',path:['country']});
+  const validTopics = industries.filter(i=>(value.industries as string[]).includes(i.id)).flatMap(i=>i.topics.map(t=>t[0] as string));
+  if(value.subtopics.some(t=>!validTopics.includes(t))) ctx.addIssue({code:'custom',message:'선택한 분야에 맞는 세부 주제를 고르세요.',path:['subtopics']});
+  if(value.scope==='country'&&value.countries.length===0) ctx.addIssue({code:'custom',message:'국가를 하나 이상 선택하세요.',path:['countries']});
+  if(new Set(value.industries).size!==value.industries.length||new Set(value.countries).size!==value.countries.length) ctx.addIssue({code:'custom',message:'같은 항목이 두 번 선택되었습니다.',path:['industries']});
 });
 export type NewsletterSelection = z.infer<typeof newsletterSelectionSchema>;
-export const defaultSelection:NewsletterSelection = {industry:'technology',subtopics:['ai'],scope:'global',country:'US',contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily'};
+export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner'};
 export function industryFor(id:string){return industries.find(i=>i.id===id)||industries[0];}
-export function regionLabel(s:NewsletterSelection){return s.scope==='global'?'전 세계':s.scope==='kr'?'대한민국':countries.find(c=>c[0]===s.country)?.[1]||s.country;}
+export function industryLabel(s:NewsletterSelection){return s.industries.map(id=>industryFor(id).label).join(' · ');}
+export function levelLabel(level:Level){return levels.find(l=>l[0]===level)?.[1]||'실무';}
+export function selectedCountries(s:NewsletterSelection){return s.scope==='global'?[]:s.scope==='kr'?['KR']:s.countries;}
 export function countryName(code:string){return code==='KR'?'대한민국':countries.find(c=>c[0]===code)?.[1]||code;}
-export function topicLabels(s:NewsletterSelection){const topics=industryFor(s.industry).topics;return s.subtopics.map(id=>topics.find(t=>t[0]===id)?.[1]||id);}
+export function regionLabel(s:NewsletterSelection){return s.scope==='global'?'전 세계':selectedCountries(s).map(countryName).join(' · ');}
+export function topicLabels(s:NewsletterSelection){return s.subtopics.map(id=>allTopics.find(t=>t[0]===id)?.[1]||id);}
 export function selectionQuery(s:NewsletterSelection){
-  return new URLSearchParams({industry:s.industry,topics:s.subtopics.join(','),scope:s.scope,country:s.country,types:s.contentTypes.join(','),name:s.name,cadence:s.cadence}).toString();
+  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level}).toString();
 }
 export function selectionFromQuery(p:Record<string,string|string[]|undefined>):NewsletterSelection{
   const get=(key:string,fallback:string)=>typeof p[key]==='string'?p[key] as string:fallback;
-  const parsed=newsletterSelectionSchema.safeParse({industry:get('industry','technology'),subtopics:get('topics',p.industry===undefined?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),country:get('country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily')});
+  const list=(key:string,legacy:string,fallback:string)=>get(key,get(legacy,fallback)).split(',').filter(Boolean);
+  const fresh=p.industries===undefined&&p.industry===undefined;
+  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner')});
   return parsed.success?parsed.data:defaultSelection;
 }
 
 export type NewsletterStory = {
   id:string; title:string; description?:string; industry:IndustryId|'unknown'; topics:string[]; countries:string[];
   type:keyof typeof contentLabels; source:string; date:string; url?:string; eventId?:string; tenant?:string; evidence:{source:string;url:string;title:string}[];
+  href?:string; sourceCount?:number; questions?:string[];
 };
 function matchesTerm(text:string,term:string){
   const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -57,13 +76,14 @@ function matchesTerm(text:string,term:string){
 }
 export function matchesSelection(story:NewsletterStory,s:NewsletterSelection){
   if(!s.contentTypes.includes(story.type))return false;
-  const country=s.scope==='kr'?'KR':s.country;
-  if(s.scope!=='global'&&!story.countries.includes(country))return false;
-  if(story.industry!=='unknown'&&story.industry!==s.industry)return false;
-  const i=industryFor(s.industry);
+  const wanted=selectedCountries(s);
+  if(wanted.length&&!story.countries.some(c=>wanted.includes(c)))return false;
+  if(story.industry!=='unknown'&&!(s.industries as string[]).includes(story.industry))return false;
+  const chosen=industries.filter(i=>(s.industries as string[]).includes(i.id));
   const title=[story.title,...story.evidence.map(e=>e.title)].join(' ');
   if(s.subtopics.length){
-    return s.subtopics.some(id=>story.topics.includes(id)||i.topics.find(t=>t[0]===id)?.[2].split(',').some(term=>matchesTerm(title,term)));
+    const topics=chosen.flatMap(i=>i.topics as readonly Topic[]);
+    return s.subtopics.some(id=>story.topics.includes(id)||topics.find(t=>t[0]===id)?.[2].split(',').some(term=>matchesTerm(title,term)));
   }
-  return story.industry===s.industry||i.terms.some(term=>matchesTerm(title,term));
+  return chosen.some(i=>story.industry===i.id||i.terms.some(term=>matchesTerm(title,term)));
 }

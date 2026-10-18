@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { appOrigin, configured } from '@/lib/env';
 import { context } from '@/lib/data';
 import {newsletterSelectionSchema} from '@/lib/newsletter';
+import {cookies} from 'next/headers';
+import {BETA_COOKIE,DRAFT_COOKIE} from '@/lib/beta';
 
 const id = z.uuid();
 function value(form:FormData,name:string) {return String(form.get(name)||'');}
@@ -88,8 +90,21 @@ export async function saveNewsletterProfile(form:FormData){
   if(!result.success)redirect(`/settings?tenant=${tenant}&message=invalid`);
   const s=result.data;
   const {error}=await client.from('newsletter_profiles').upsert({tenant_id:tenant,user_id:user.id,
-    industry:s.industry,subtopics:s.subtopics,scope:s.scope,country:s.country,content_types:s.contentTypes,
-    name:s.name,cadence:s.cadence,updated_at:new Date().toISOString()}, {onConflict:'tenant_id,user_id'});
+    industry:s.industries[0],industries:s.industries,subtopics:s.subtopics,scope:s.scope,country:s.countries[0]||'US',countries:s.countries.length?s.countries:['US'],
+    content_types:s.contentTypes,name:s.name,cadence:s.cadence,level:s.level,updated_at:new Date().toISOString()}, {onConflict:'tenant_id,user_id'});
   if(error)redirect(`/settings?tenant=${tenant}&message=save`);
   revalidatePath('/publish');redirect(`/publish?tenant=${tenant}`);
+}
+
+const betaCookie={path:'/',maxAge:60*60*24*90,sameSite:'lax' as const,httpOnly:true,secure:process.env.VERCEL==='1'};
+export async function startBeta(form:FormData){
+  const name=value(form,'nickname').replace(/[\u0000-\u001f<>]/g,'').trim().slice(0,20);
+  const jar=await cookies();
+  jar.set(BETA_COOKIE,encodeURIComponent(name),betaCookie);
+  redirect(jar.get(DRAFT_COOKIE)?'/my':'/customize?beta=1');
+}
+export async function endBeta(){
+  const jar=await cookies();
+  jar.delete(BETA_COOKIE);jar.delete(DRAFT_COOKIE);
+  redirect('/');
 }

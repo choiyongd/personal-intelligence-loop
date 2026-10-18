@@ -6,6 +6,7 @@ import {PGlite} from '@electric-sql/pglite';
 const root=new URL('../',import.meta.url);
 const migration=await readFile(new URL('supabase/migrations/202610150001_core.sql',root),'utf8');
 const personalMigration=await readFile(new URL('supabase/migrations/202610170001_newsletter_profiles.sql',root),'utf8');
+const multiMigration=await readFile(new URL('supabase/migrations/202610180001_multi_select_profiles.sql',root),'utf8');
 const seed=await readFile(new URL('supabase/seed.sql',root),'utf8');
 const U1='11111111-1111-4111-8111-111111111111',U2='22222222-2222-4222-8222-222222222222';
 const E1='33333333-3333-4333-8333-333333333333',E2='44444444-4444-4444-8444-444444444444';
@@ -18,7 +19,7 @@ async function db(){
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;
     insert into auth.users values('${U1}'),('${U2}');`);
-  await db.exec(migration);await db.exec(personalMigration);await db.exec(seed);
+  await db.exec(migration);await db.exec(personalMigration);await db.exec(multiMigration);await db.exec(seed);
   return db;
 }
 async function as(db,role,uid,fn){
@@ -137,6 +138,21 @@ test('profile check constraints enforce topic parent, known country and nonempty
       await assert.rejects(d.query("insert into public.newsletter_profiles(tenant_id,user_id,industry,subtopics) values($1,$2,'health',array['ai'])",[t1,U1]),/check constraint/);
       await assert.rejects(d.query("insert into public.newsletter_profiles(tenant_id,user_id,industry,country) values($1,$2,'technology','XX')",[t1,U1]),/check constraint/);
       await assert.rejects(d.query("insert into public.newsletter_profiles(tenant_id,user_id,industry,content_types) values($1,$2,'technology','{}')",[t1,U1]),/check constraint/);
+    });
+  }finally{await d.close();}
+});
+
+test('profiles accept several fields, topics and countries but only from the selected fields',async()=>{
+  const d=await db();try{
+    const {t1}=await setup(d);
+    await as(d,'authenticated',U1,async()=>{
+      const row=(await d.query("insert into public.newsletter_profiles(tenant_id,user_id,industry,industries,subtopics,scope,country,countries,level) values($1,$2,'technology',array['technology','health'],array['ai','biotech'],'country','US',array['US','JP'],'intro') returning industry,country,level",[t1,U1])).rows[0];
+      assert.deepEqual(row,{industry:'technology',country:'US',level:'intro'});
+      await assert.rejects(d.query("update public.newsletter_profiles set subtopics=array['ai','battery'] where user_id=$1",[U1]),/check constraint/);
+      await assert.rejects(d.query("update public.newsletter_profiles set level='guru' where user_id=$1",[U1]),/check constraint/);
+      await assert.rejects(d.query("update public.newsletter_profiles set countries=array['US','XX'] where user_id=$1",[U1]),/check constraint/);
+      const moved=(await d.query("update public.newsletter_profiles set industries=array['energy'],subtopics=array['battery'] where user_id=$1 returning industry",[U1])).rows[0];
+      assert.equal(moved.industry,'energy');
     });
   }finally{await d.close();}
 });
