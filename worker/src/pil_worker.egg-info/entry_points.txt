@@ -1,0 +1,2 @@
+[console_scripts]
+pil-worker = pil_worker.cli:main

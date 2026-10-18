@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: pil-worker
+Version: 0.1.0
+Summary: Policy-gated, idempotent RSS/API ingestion worker
+Requires-Python: >=3.11
+Requires-Dist: psycopg[binary]<4,>=3.2.6
+Requires-Dist: defusedxml<1,>=0.7.1
+Requires-Dist: python-dotenv<2,>=1.0.1
+Provides-Extra: test
+Requires-Dist: pytest<9,>=8.3; extra == "test"

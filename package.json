@@ -1,0 +1,27 @@
+{
+  "name": "personal-intelligence-loop",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w apps/web",
+    "prebuild": "node scripts/guard-running-preview.mjs",
+    "build": "npm run build -w apps/web",
+    "start": "npm run start -w apps/web",
+    "preview": "npm run start -w apps/web -- --port 3100",
+    "test:newsletter": "node --test tests/newsletter.test.mjs",
+    "typecheck": "npm run typecheck -w apps/web",
+    "test:db": "node --test tests/database.test.mjs",
+    "test:web": "node --test tests/web.test.mjs",
+    "test:worker-integration": "node tests/worker-integration.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@electric-sql/pglite-socket": "^0.2.13"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

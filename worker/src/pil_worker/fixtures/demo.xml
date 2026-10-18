@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>PROJECT OWNED SYNTHETIC FIXTURES</title>
+<item><guid>demo-ai-1</guid><title>Atlas AI model evaluation policy announced for developers</title><link>https://news.example.com/atlas/evaluation?utm_source=test</link><pubDate>Thu, 15 Oct 2026 08:00:00 GMT</pubDate></item>
+<item><guid>demo-energy-1</guid><title>Helios energy storage safety standard opens consultation</title><link>https://news.example.com/helios/consultation</link><pubDate>Thu, 15 Oct 2026 08:00:00 GMT</pubDate></item>
+<item><guid>demo-health-1</guid><title>Meridian health data interoperability rules published</title><link>https://news.example.com/meridian/rules</link><pubDate>Thu, 15 Oct 2026 08:00:00 GMT</pubDate></item>
+<item><guid>bad-date</guid><title>Invalid publication date fixture should be rejected</title><link>https://news.example.com/bad</link><pubDate>bad-date</pubDate></item>
+<item><guid>bad-host</guid><title>Invalid private URL fixture should be rejected</title><link>http://127.0.0.1/private</link><pubDate>Thu, 15 Oct 2026 08:00:00 GMT</pubDate></item>
+</channel></rss>

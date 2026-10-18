@@ -1,0 +1,6 @@
+psycopg[binary]<4,>=3.2.6
+defusedxml<1,>=0.7.1
+python-dotenv<2,>=1.0.1
+
+[test]
+pytest<9,>=8.3
