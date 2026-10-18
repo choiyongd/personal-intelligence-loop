@@ -4,12 +4,18 @@ import {articles as businessFinance} from './business-finance';
 import {articles as scienceHealth} from './science-health';
 import {articles as energyPolicy} from './energy-policy';
 import {articles as design} from './design';
-import {allTopics,industries,selectedCountries,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
+import {articles as europe} from './world-europe';
+import {articles as southAmerica} from './world-south-america';
+import {articles as northAmerica} from './world-north-america';
+import {articles as eurasia} from './world-eurasia';
+import {articles as mobility} from './world-mobility';
+import {articles as society} from './world-society';
+import {allTopics,continentOf,industries,selectedCountries,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
 
 export type {Article} from './types';
 import {hotPicks,HOT_PER_EDITION} from './hot';
 export {HOT_BASIS,hotPicks,HOT_PER_EDITION} from './hot';
-export const allArticles:Article[]=[...technology,...businessFinance,...scienceHealth,...energyPolicy,...design];
+export const allArticles:Article[]=[...technology,...businessFinance,...scienceHealth,...energyPolicy,...design,...europe,...southAmerica,...northAmerica,...eurasia,...mobility,...society];
 export function articleById(id:string){return allArticles.find(a=>a.id===id);}
 const articleTopicField=new Map(industries.flatMap(i=>i.topics.map(t=>[t[0] as string,i.id as string] as const)));
 
@@ -23,8 +29,20 @@ export function articlesFor(s:NewsletterSelection){
   const typed=inScope.filter(a=>s.contentTypes.includes(a.type));
   const pool=typed.length?typed:inScope;
   const wanted=selectedCountries(s);
-  const score=(a:Article)=>wanted.length?(a.regions.some(r=>wanted.includes(r))?0:1):(a.regions.includes('GLOBAL')?0:1);
-  return pool.map((a,i)=>({a,i})).sort((x,y)=>score(x.a)-score(y.a)||x.i-y.i).map(x=>x.a);
+  if(wanted.length){
+    const score=(a:Article)=>a.regions.some(r=>wanted.includes(r))?0:1;
+    return pool.map((a,i)=>({a,i})).sort((x,y)=>score(x.a)-score(y.a)||x.i-y.i).map(x=>x.a);
+  }
+  return spreadAcrossContinents(pool);
+}
+// World editions take turns between continents, so one region's stories never crowd out the others.
+function homeContinent(a:Article){const r=a.regions.find(x=>x!=='GLOBAL'&&x!=='KR');return (r&&continentOf(r))||'ASIA_PACIFIC';}
+function spreadAcrossContinents(pool:Article[]){
+  const queues=new Map<string,Article[]>();
+  for(const a of pool){const k=homeContinent(a);queues.set(k,[...(queues.get(k)||[]),a]);}
+  const out:Article[]=[];
+  while(out.length<pool.length)for(const q of queues.values()){const a=q.shift();if(a)out.push(a);}
+  return out;
 }
 export function articleStory(a:Article,level:Level):NewsletterStory{
   const publishers=[...new Set(a.sources.map(s=>s.publisher))];

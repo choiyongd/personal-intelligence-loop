@@ -19,7 +19,7 @@ test('rejects subtopics from another parent and unsupported countries',()=>{
   assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,industries:[]}).success,false);
   assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,level:'guru'}).success,false);
   assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,scope:'country',countries:['US','XX']}).success,false);
-  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,scope:'country',countries:['US','JP','CN','GB','DE','FR']}).success,false);
+  assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,scope:'country',countries:['US','JP','CN','GB','DE','FR','BR','KZ','MX']}).success,false);
   assert.equal(newsletterSelectionSchema.safeParse({...defaultSelection,contentTypes:[]}).success,false);
 });
 test('Korean edition excludes US and country-unknown stories rather than inferring language',()=>{
@@ -47,4 +47,10 @@ test('legacy single-field links still open, and several fields widen the match',
   const both={...defaultSelection,industries:['technology','health'],subtopics:[],scope:'country',countries:['US','JP']};
   assert.equal(matchesSelection({...story,industry:'health',countries:['JP']},both),true);
   assert.equal(matchesSelection({...story,industry:'energy'},both),false);
+});
+test('a picked continent matches stories from any of its countries',()=>{
+  const s={...defaultSelection,scope:'country',countries:['EUROPE','BR'],contentTypes:['research']};
+  assert.equal(matchesSelection({...story,countries:['DE']},s),true);
+  assert.equal(matchesSelection({...story,countries:['AR']},s),false);
+  assert.equal(matchesSelection({...story,countries:['BR']},s),true);
 });

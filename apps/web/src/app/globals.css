@@ -602,7 +602,7 @@ code { overflow-wrap: anywhere; }
 .nl-basis { font-size: 12px; color: var(--nl-sub); line-height: 1.6; margin: 12px 0 0; }
 
 /* Newsletter as a magazine cover: paper ground, display serif masthead, orange accents, cover art beside the headline column. */
-.nl { --mg-paper: #f4f2ed; --mg-ink: #1c1b19; --mg-sub: #6e6a63; --mg-rule: #d6d1c7; --mg-accent: #ee6f3c; --mg-display: var(--font-baskerville), var(--font-serif-kr), Georgia, serif;
+.nl { --mg-paper: #f4f2ed; --mg-ink: #1c1b19; --mg-sub: #6e6a63; --mg-rule: #d6d1c7; --mg-accent: #ee6f3c; --mg-display: var(--sans);
   --nl-deep: var(--mg-ink); --nl-blue: var(--mg-accent); --nl-sub: var(--mg-sub); --nl-rule: var(--mg-rule); --nl-mist: #ebe7df; --nl-sky: #ebe7df; --nl-navy: var(--mg-ink);
   background: var(--mg-paper); color: var(--mg-ink); border-radius: 4px; box-shadow: 0 1px 0 var(--mg-rule), 0 24px 60px #2a221414; }
 .nl-mast { padding: 26px 44px 0; }
@@ -611,8 +611,8 @@ code { overflow-wrap: anywhere; }
 .nl-mast-top b { color: var(--mg-ink); }
 .nl-mast-top span { font-family: var(--mg-display); font-weight: 700; font-size: 13px; letter-spacing: .08em; }
 .nl-mast-row { display: grid; grid-template-columns: 120px minmax(0,1fr) 120px; align-items: center; gap: 16px; padding: 18px 0 22px; border-bottom: 2px solid var(--mg-ink); }
-.nl-mast-note { margin: 0; font-family: var(--mg-display); font-style: italic; font-size: 13px; line-height: 1.35; color: var(--mg-sub); }
-.nl .nl-title { font-family: var(--mg-display); color: var(--mg-ink); font-weight: 700; text-align: center; font-size: clamp(44px,6.4vw,92px); line-height: .98; letter-spacing: -.02em; max-width: none; margin: 0; text-transform: uppercase; word-break: keep-all; overflow-wrap: anywhere; }
+.nl-mast-note { margin: 0; font-family: var(--mg-display); font-weight: 500; font-size: 13px; line-height: 1.35; color: var(--mg-sub); }
+.nl .nl-title { font-family: var(--mg-display); color: var(--mg-ink); font-weight: 800; text-align: center; font-size: clamp(44px,6.4vw,92px); line-height: .98; letter-spacing: -.02em; max-width: none; margin: 0; text-transform: uppercase; word-break: keep-all; overflow-wrap: anywhere; }
 .nl-vol { margin: 0; text-align: right; font-family: var(--mg-display); font-weight: 700; font-size: 46px; line-height: 1; }
 .nl-vol span { font-size: 14px; letter-spacing: .06em; margin-right: 4px; }
 .nl-teasers { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--mg-rule); }
@@ -687,3 +687,5 @@ code { overflow-wrap: anywhere; }
   .nl-heads article { animation: card-up .7s cubic-bezier(.2,.7,.2,1) both; }
   .nl-heads article:nth-of-type(2) { animation-delay: .12s; }
 }
+.country-chips .topic-group { margin-top: 14px; }
+.topic-chip.continent-chip { border-style: dashed; font-weight: 700; }
