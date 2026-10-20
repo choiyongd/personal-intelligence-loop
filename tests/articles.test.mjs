@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import ts from 'typescript';
 // Load each editorial data file as plain JS; the files only import types.
-const files=['technology','business-finance','science-health','energy-policy','design','world-europe','world-south-america','world-north-america','world-eurasia','world-mobility','world-society'];
+const files=['technology','business-finance','science-health','energy-policy','design','world-europe','world-south-america','world-north-america','world-eurasia','world-mobility','world-society','more-culture','more-life','more-environment','more-work','more-industry','more-economy'];
 const articles=[];
 for(const f of files){
   const source=await readFile(new URL(`../apps/web/src/lib/articles/${f}.ts`,import.meta.url),'utf8');
@@ -13,7 +13,9 @@ for(const f of files){
   articles.push(...m.exports.articles);
 }
 const topics=['ai','semiconductor','robotics','software','startup','strategy','commerce','space','materials','biology','battery','renewables','climate','digital-health','biotech','medicine','economy','fintech','investment','product-design','creative','culture','regulation','society','international',
-  'cybersecurity','quantum','supply-chain','labor','physics','earth','nuclear','critical-minerals','public-health','aging','crypto','realestate','architecture','media','security','migration','ev','aviation','autonomous','agriculture','foodtech','edtech','higher-ed'];
+  'cybersecurity','quantum','supply-chain','labor','physics','earth','nuclear','critical-minerals','public-health','aging','crypto','realestate','architecture','media','security','migration','ev','aviation','autonomous','agriculture','foodtech','edtech','higher-ed',
+  'cloud','esg','neuroscience','hydrogen','mental-health','currency','ux','democracy','shipping','food-prices','k12',
+  'games','music','film','sports-business','mega-events','travel','wellness','fashion','biodiversity','ocean','pollution','skills','remote-work'];
 const continents=['EUROPE','N_AMERICA','S_AMERICA','EURASIA'];
 test('every topic has an explainer and ids are unique',()=>{
   assert.deepEqual([...new Set(articles.map(a=>a.topic))].sort(),[...topics].sort());

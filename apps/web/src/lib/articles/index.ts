@@ -10,12 +10,18 @@ import {articles as northAmerica} from './world-north-america';
 import {articles as eurasia} from './world-eurasia';
 import {articles as mobility} from './world-mobility';
 import {articles as society} from './world-society';
+import {articles as moreCulture} from './more-culture';
+import {articles as moreLife} from './more-life';
+import {articles as moreEnvironment} from './more-environment';
+import {articles as moreWork} from './more-work';
+import {articles as moreIndustry} from './more-industry';
+import {articles as moreEconomy} from './more-economy';
 import {allTopics,continentOf,industries,selectedCountries,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
 
 export type {Article} from './types';
 import {hotPicks,HOT_PER_EDITION} from './hot';
 export {HOT_BASIS,hotPicks,HOT_PER_EDITION} from './hot';
-export const allArticles:Article[]=[...technology,...businessFinance,...scienceHealth,...energyPolicy,...design,...europe,...southAmerica,...northAmerica,...eurasia,...mobility,...society];
+export const allArticles:Article[]=[...technology,...businessFinance,...scienceHealth,...energyPolicy,...design,...europe,...southAmerica,...northAmerica,...eurasia,...mobility,...society,...moreCulture,...moreLife,...moreEnvironment,...moreWork,...moreIndustry,...moreEconomy];
 export function articleById(id:string){return allArticles.find(a=>a.id===id);}
 const articleTopicField=new Map(industries.flatMap(i=>i.topics.map(t=>[t[0] as string,i.id as string] as const)));
 

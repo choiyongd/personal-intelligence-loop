@@ -89,7 +89,7 @@ export const articles:Article[]=[
     id:'esg-explainer',
     industry:'business',
     topic:'esg',
-    regions:['GLOBAL','KR','US','DE','FR','BR','JP','EUROPE','N_AMERICA','S_AMERICA','ASIA_PACIFIC'],
+    regions:['GLOBAL','KR','US','EUROPE','N_AMERICA','ASIA_PACIFIC'],
     type:'news',
     title:'EU는 줄이고 미국은 멈추고 한국은 2028년 시작…갈라진 ESG 공시 지도',
     dek:'EU는 2026년 2월 옴니버스 개정으로 지속가능성 공시 대상 기업을 대폭 줄였고, 미국 SEC는 2025년 3월 기후공시 규칙 방어를 포기했습니다. 반면 한국은 2026년 7월 자산 10조원 이상 코스피 상장사부터 2028년 의무공시를 시작하는 최종안을 내놨습니다.',
@@ -161,8 +161,8 @@ export const articles:Article[]=[
       {title:'EU Sustainability Omnibus Published in the Official Journal',publisher:'Latham & Watkins',year:'2026',url:'https://www.lw.com/en/insights/EU-Sustainability-Omnibus-Published-in-the-Official-Journal',kind:'보도'},
       {title:'SEC Votes to End Defense of Climate Disclosure Rules',publisher:'U.S. Securities and Exchange Commission',year:'2025',url:'https://sec.gov/newsroom/press-releases/2025-58',kind:'공식 자료'},
       {title:'Plenary session: Adoption of IFRS Sustainability Disclosure Standards',publisher:'IFRS Foundation',year:'2026',url:'https://www.ifrs.org/content/dam/ifrs/events-and-conferences/2026/september/wss-conference/plenary-session-adoption-of-ifrs-sustainability-disclosure-standards.pdf',kind:'공식 자료'},
-      {title:'지속가능성 의무공시 시대 (Emerging Trends, 2026년 8월)',publisher:'삼정KPMG',year:'2026',url:'https://kpmg.com/kr/ko/media/newsletter/202608/emerging-trends.html',kind:'보도'},
-      {title:'[기고] 지속가능성 공시 의무화 로드맵',publisher:'경향신문',year:'2026',url:'https://www.khan.co.kr/article/202608051959005/amp',kind:'보도'},
+      {title:'Emerging Trends: 지속가능성 의무공시 시대, 기업의 공시는 어떻게 달라지는가?',publisher:'삼정KPMG',year:'2026',url:'https://kpmg.com/kr/ko/media/newsletter/202608/emerging-trends.html',kind:'보도'},
+      {title:'[기고] KSSB 지속 가능성 공시 시대, 인증의 독립성이 필요하다',publisher:'경향신문',year:'2026',url:'https://www.khan.co.kr/article/202608051959005/amp',kind:'보도'},
       {title:'California SB 253 and SB 261: Developments and Litigation',publisher:'Cooley',year:'2026',url:'https://www.cooley.com/news/insight/2026/2026-01-26-californias-sb-253-and-sb-261-developments-and-litigation',kind:'보도'},
       {title:'California Air Resources Board unanimously approves initial climate disclosure regulation',publisher:'Hogan Lovells',year:'2026',url:'https://www.hlc.com/en/publications/california-air-resources-board-unanimously-approves-initial-climate-disclosure-regulation',kind:'보도'}
     ]
@@ -208,7 +208,7 @@ export const articles:Article[]=[
         paragraphs:[
           '중국 공업정보화부 등 7개 부처는 2025년 8월 BCI 산업 혁신 지침을 내놓고, 2027년까지 핵심 기술을 돌파해 의료·산업·소비 분야 활용을 앞당기겠다고 밝혔다[3]. 2030년까지는 안전하고 신뢰할 수 있는 산업 생태계를 만들고 세계적 영향력을 가진 기업 2~3곳을 키워 세계 선두권에 오르는 것이 목표다[3].',
           '지침은 2027년까지 전극·칩·기기 성능을 국제 수준으로 끌어올리고 산업 클러스터 2~3곳을 만드는 내용도 담았다[4]. 중국뇌과학연구소와 뉴사이버(NeuCyber)가 함께 개발한 반침습형 완전 이식 무선 BCI ‘베이나오 1호’는 임상 검증 단계에 들어섰다[4]. 다만 개념 증명에서 대규모 임상 적용까지는 시간이 더 필요하다는 평가도 같은 보도에 실렸다[4].',
-          '한국 독자에게 이 흐름은 의료기기·반도체·데이터 규제가 겹치는 영역이라는 점에서 의미가 있다. 1,000개가 넘는 전극에서 신호를 읽는 이식형 기기[7]와 1.6페타바이트에 이르는 뇌 지도 데이터[2]는 저전력 칩, 무선 통신, 대용량 데이터 처리 기술을 함께 요구한다. 동시에 뇌 신호는 개인의 의도와 건강 상태를 담는 정보여서, 임상 규모가 커질수록 데이터 보호 기준이 기술 경쟁만큼 중요해진다[3][8].'
+          '한국 독자에게 이 흐름은 의료기기·반도체·데이터 규제가 겹치는 영역이라는 점에서 의미가 있다. 1,000개가 넘는 전극에서 신호를 읽는 이식형 기기[7]와 1.6페타바이트에 이르는 뇌 지도 데이터[2]는 저전력 칩, 무선 통신, 대용량 데이터 처리 기술을 함께 요구한다. 동시에 뇌 신호는 개인의 의도와 건강 상태를 담는 정보여서, 임상 규모가 커질수록 데이터 보호 기준이 기술 경쟁만큼 중요해진다.'
         ]
       }
     ],
@@ -216,7 +216,7 @@ export const articles:Article[]=[
       heading:'“완전한 지도”와 “생각으로 조작”이라는 표현의 한계',
       paragraphs:[
         'FlyWire 지도는 암컷 초파리 한 마리의 뇌에서 나왔습니다. 연구진도 암수 차이와 개체 간 연결 차이가 있다는 점을 인정했고, 전기적 시냅스는 이 데이터로 식별할 수 없으며 신경전달물질 종류는 직접 측정이 아닌 통계적 예측이라고 밝혔습니다[1]. 놓친 시냅스가 주된 오류여서 분석에서는 시냅스 5개 이상의 연결만 쓰도록 권고했습니다[1].',
-        'MICrONS의 1㎣는 생쥐 뇌 전체의 극히 일부입니다[2]. 배선도만으로 뇌의 작동을 설명할 수는 없기 때문에, 이 프로젝트는 같은 조직에서 시각 자극에 대한 활동을 먼저 기록한 뒤 구조를 그려 둘을 연결하려 했습니다[2].',
+        'MICrONS의 1㎣는 생쥐 뇌 전체의 극히 일부입니다[2]. 배선도만으로 뇌의 작동을 설명할 수는 없기 때문에, 이 프로젝트는 영상을 보는 생쥐의 뉴런 발화 패턴을 기록하고 이를 같은 조직의 배선도 위에 겹쳐 구조와 기능을 연결하려 했습니다[2].',
         'BCI 임상은 대부분 초기 타당성 단계로, 참여자가 한 자릿수에서 수십 명 수준입니다[5][6][8]. 회사 발표와 병원 보도자료는 성공 사례를 중심으로 공개되므로, 장기 안전성과 신호 품질 저하 여부는 동료 심사를 거친 임상 결과가 나와야 판단할 수 있습니다. 뉴럴링크의 전 세계 누적 이식 인원은 이 글이 확인한 공식 자료에서 2025년 6월 5명 이후 갱신된 수치를 찾지 못했습니다[6].'
       ]
     },
@@ -247,7 +247,7 @@ export const articles:Article[]=[
       {title:'Synchron Raises $200 Million Series D to Advance Brain-Computer Interface Technology',publisher:'Synchron (Business Wire)',year:'2025',url:'https://businesswire.com/news/home/20251106150841/en/Synchron-Raises-%24200-Million-Series-D-to-Advance-Brain-Computer-Interface-Technology',kind:'원문'},
       {title:'Neuralink raises $650m to widen use of brain implants',publisher:'pharmaphorum',year:'2025',url:'https://pharmaphorum.com/news/neuralink-raises-650m-widen-use-brain-implants',kind:'보도'},
       {title:'First UK patient uses thought to control computer hours after Neuralink implant',publisher:'University College London',year:'2025',url:'https://www.ucl.ac.uk/news/2025/oct/first-uk-patient-uses-thought-control-computer-hours-after-neuralink-implant',kind:'공식 자료'},
-      {title:'Seven GB-PRIME patients now participating in Neuralink trial',publisher:'University College London Hospitals NHS Foundation Trust',year:'2026',url:'https://www.uclh.nhs.uk/news/seven-gb-prime-patients-now-participating-neurolink-trial',kind:'공식 자료'}
+      {title:'Seven GB-PRIME patients now participating in Neuralink trial (UCLH news)',publisher:'University College London Hospitals NHS Foundation Trust',year:'2026',url:'https://www.uclh.nhs.uk/news/seven-gb-prime-patients-now-participating-neurolink-trial',kind:'공식 자료'}
     ]
   },
   {
@@ -287,7 +287,7 @@ export const articles:Article[]=[
       },
       {
         heading:'한국: 암모니아 혼소에서 수전해로 방향을 틀다',
-        easy:'한국은 세계 최초로 청정수소로 만든 전기를 경쟁입찰로 사들이는 시장을 열었습니다. 하지만 석탄과 암모니아를 섞어 태우는 방식이 탈석탄 목표와 맞지 않는다는 비판에 따라 제도를 고치고 있습니다.',
+        easy:'한국은 청정수소로 만든 전기를 경쟁입찰로 사들이는 시장을 열었습니다. 하지만 석탄과 암모니아를 섞어 태우는 방식이 탈석탄 목표와 맞지 않는다는 비판에 따라 제도를 고치고 있습니다.',
         paragraphs:[
           '2024년 첫 청정수소발전 입찰에서는 한국남부발전의 삼척그린파워 1호기 암모니아 혼소 사업이 낙찰돼 2028~2042년 750GWh를 생산하기로 했다[7]. 그러나 한국전력거래소는 마감일인 2025년 10월 17일 2025년도 입찰을 취소했고, 기후에너지환경부가 이 제도와 2040년 탈석탄 국정과제가 맞지 않는다고 지적한 것이 이유로 설명됐다[7]. 거래소는 삼척그린파워와도 계약 기간을 줄이는 변경 협상을 하기로 했다[7].',
           '정부는 2026년 6월 8일 고시 개정안을 행정예고하며 올해 청정수소발전 500GWh, 일반수소발전 930GWh 물량으로 하반기에 입찰을 열겠다고 밝혔다[8]. 개정안은 석탄·암모니아 혼소를 청정수소발전 지원 대상에서 빼고, 수전해 기반 청정수소 생산을 늘리도록 평가 체계를 바꾸며, 수소 1kg당 배출량 4kgCO2e 이하 인증 연료만 참여하게 했다[8].',
@@ -299,7 +299,7 @@ export const articles:Article[]=[
       heading:'“발표 용량”과 “낙찰가”를 어떻게 읽어야 하나',
       paragraphs:[
         'IEA의 3,700만t은 발표된 모든 사업을 더한 잠재량이지 예측치가 아닙니다[1]. 실제로 2030년에 가동될 가능성이 높은 물량은 FID·건설 중 사업 400만t과 가능성이 높은 사업을 합친 1,000만t 안팎이어서[1], 발표 숫자와 현실 사이의 간극을 함께 봐야 합니다.',
-        '유럽수소은행 3차 경매의 최저 낙찰가는 보도마다 다릅니다. pv magazine은 0.44유로를 최저가로 보도했지만, 같은 기사에 인용된 집행위원회 자료는 0.57~3.49유로 범위를 제시했습니다[4]. 낙찰가는 보조금 액수이지 수소 생산 단가가 아니며, 이전 경매 낙찰 사업 중 일부가 계약을 포기할 수 있다는 점도 고려해야 합니다[3][4].',
+        '유럽수소은행 3차 경매의 최저 낙찰가는 보도마다 다릅니다. pv magazine은 0.44유로를 최저가로 보도했지만, 같은 기사에 인용된 집행위원회 자료는 0.57~3.49유로 범위를 제시했습니다[4]. 낙찰가는 보조금 액수이지 수소 생산 단가가 아니며, 선정된 사업이 실제 보조금 계약에 서명하고 가동까지 가는지는 별도로 지켜봐야 합니다[3][4].',
         '한국 청정수소발전 입찰의 2026년 일정과 물량은 6월 행정예고 기준이며[8], 2026년 10월 현재 개정안 확정과 입찰 개설 여부는 이 글이 확인한 자료로는 알 수 없습니다. 미국 45V의 착공 기한도 재무부 세부 지침에 따라 해석이 달라질 수 있습니다[5].'
       ]
     },
@@ -330,7 +330,7 @@ export const articles:Article[]=[
       {title:'Congress Phases Out Energy Tax Credits',publisher:'Pierce Atwood',year:'2025',url:'https://www.pierceatwood.com/alerts/congress-phases-out-energy-tax-credits',kind:'보도'},
       {title:'New law establishes Low-Carbon Hydrogen Development Program in Brazil',publisher:'Mattos Filho',year:'2024',url:'https://www.mattosfilho.com.br/en/unico/law-hydrogen-development-program/',kind:'보도'},
       {title:'이재명 정부, 청정수소발전 입찰 전격 중단…지난해 물량도 기간 단축 검토',publisher:'뉴스타파',year:'2025',url:'https://newstapa.org/article/sZbYU',kind:'보도'},
-      {title:'수소발전 입찰시장 물량 확정…청정수소 500GWh, 혼소발전 제외',publisher:'아시아경제',year:'2026',url:'https://view.asiae.co.kr/article/2026060819041231529',kind:'보도'}
+      {title:'수소발전 입찰시장 하반기 개설…청정수소 500GWh·일반수소 930GWh',publisher:'아시아경제',year:'2026',url:'https://view.asiae.co.kr/article/2026060819041231529',kind:'보도'}
     ]
   }
 ];
