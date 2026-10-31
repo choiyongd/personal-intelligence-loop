@@ -2,7 +2,7 @@ import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {PublicNav} from '@/components/public-nav';
 import {articleById,topicLabel} from '@/lib/articles';
-import {betaReader} from '@/lib/beta';
+import {betaReader,draftSelection} from '@/lib/beta';
 import {contentLabels,countryName,industryFor,levels,levelLabel,type Level} from '@/lib/newsletter';
 
 export async function generateMetadata({params}:{params:Promise<{id:string}>}){const a=articleById((await params).id);return {title:a?`${a.title} · loop.`:'기사 없음'};}
@@ -16,6 +16,8 @@ export default async function ArticlePage({params,searchParams}:{params:Promise<
   const a=articleById(id);if(!a)notFound();
   const level:Level=raw==='intro'||raw==='expert'?raw:'practitioner';
   const beta=await betaReader();
+  // The reader's chosen article look; visitors without saved choices get the default studio style.
+  const look=(beta?await draftSelection():null)||{articleStyle:'studio',articleAccent:'auto'};
   // Page numbers come from the layout, so drop any number the writer put in the heading.
   const bare=(h:string)=>h.replace(/^\s*\d+\s*장\s*[.:·]?\s*/,'');
   const pages=[...a.pages.map(p=>({...p,heading:bare(p.heading),deep:false})),...(level==='expert'?[{heading:bare(a.deepDive.heading),easy:'',paragraphs:a.deepDive.paragraphs,deep:true}]:[])];
@@ -23,7 +25,7 @@ export default async function ArticlePage({params,searchParams}:{params:Promise<
   const regions=a.regions.map(r=>r==='GLOBAL'?'전 세계':countryName(r)).join(' · ');
   return <div className="site-page article-site"><PublicNav/><div className="reading-progress" aria-hidden="true"/><main id="main" className="article-view">
     <nav className="article-back" aria-label="기사 이동"><Link href={beta?'/my':'/newsletter'}>← {beta?'나의 뉴스레터':'뉴스레터'}로</Link><div className="level-switch" role="group" aria-label="읽는 수준">{levels.map(([lv,label])=><Link key={lv} href={`/article/${a.id}?level=${lv}`} aria-current={lv===level?'true':undefined}>{label}</Link>)}</div></nav>
-    <article className="explainer">
+    <article className={`explainer art-${look.articleStyle} accent-${look.articleAccent}`}>
       <header className="explainer-head"><p className="explainer-kicker">{industryFor(a.industry).label} · {topicLabel(a.topic)} · {contentLabels[a.type]}</p><h1>{a.title}</h1><p className="explainer-dek">{a.dek}</p><dl className="explainer-meta"><div><dt>읽는 수준</dt><dd>{levelLabel(level)}</dd></div><div><dt>분량</dt><dd>{total}장</dd></div><div><dt>지역</dt><dd>{regions}</dd></div><div><dt>사실 기준일</dt><dd>{a.asOf}</dd></div><div><dt>출처</dt><dd><a href="#sources">{a.sources.length}개</a></dd></div></dl></header>
       <div className="explainer-inner">
       {level==='intro'&&<aside className="glossary" aria-label="먼저 알아둘 말"><h2>먼저 알아둘 말</h2><dl>{a.glossary.map(g=><div key={g.term}><dt>{g.term}</dt><dd>{g.meaning}</dd></div>)}</dl></aside>}

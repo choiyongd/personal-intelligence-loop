@@ -40,6 +40,11 @@ export async function currentReader():Promise<Reader|null>{
   if(error)throw new Error('베타 독자 정보를 불러오지 못했습니다.');
   return data&&same(data.token_hash,hash(secret))?toReader(data):null;
 }
+export async function readerById(id:string):Promise<Reader|null>{
+  const {data,error}=await admin().from('beta_readers').select(readerColumns).eq('id',id).maybeSingle();
+  if(error)throw new Error('베타 독자 정보를 불러오지 못했습니다.');
+  return data?toReader(data):null;
+}
 function scheduleColumns(s:NewsletterSelection){return {selection:s,cadence:s.cadence,send_hour:s.sendHour,send_weekday:s.sendWeekday,updated_at:new Date().toISOString()};}
 // Called only from server actions, which may set cookies.
 export async function ensureReader(name:string,selection:NewsletterSelection){

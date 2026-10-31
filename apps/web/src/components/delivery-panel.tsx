@@ -4,7 +4,7 @@ import {scheduleLabel,type NewsletterSelection,type Plan} from '@/lib/newsletter
 import {resumeEmail,stopEmail,subscribeEmail} from '@/app/beta-actions';
 
 const notices:Record<string,string>={
-  check:'확인 메일을 보냈어요. 메일의 버튼을 누르면 발송이 시작됩니다.',confirmed:'메일 주소가 확인됐어요. 정한 시간에 새 호를 보내드립니다.',
+  check:'확인 메일을 보냈어요. 메일의 버튼을 한 번 누르면 발송이 시작됩니다.',confirmed:'메일 주소가 확인됐어요. 이제 만든 호를 메일로 보내드립니다.','confirmed-sent':'메일 주소가 확인됐고, 가장 최근에 만든 호를 방금 메일로 보냈어요.',on:'메일로 받기를 켰어요.',
   stopped:'메일 발송을 멈췄어요. 보관함은 그대로 남아 있습니다.',resumed:'메일 발송을 다시 시작했어요.',wait:'확인 메일을 방금 보냈어요. 1분 뒤에 다시 시도해 주세요.',
   'bad-email':'메일 주소 형식을 확인해 주세요.',error:'메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.',invalid:'확인 링크가 올바르지 않아요. 다시 신청해 주세요.',
   expired:'확인 링크가 만료됐어요. 다시 신청해 주세요.',unavailable:'메일 발송은 운영 설정(저장소와 메일 발송 계정)이 끝나면 열립니다.',sent:'방금 만든 호를 메일로도 보냈어요.',

@@ -60,6 +60,9 @@ export const newsletterSelectionSchema = z.object({
   sendHour: z.coerce.number().int().min(0).max(23).default(7),
   sendWeekday: z.coerce.number().int().min(0).max(6).default(1),
   theme: z.enum(['magazine','minimal','bento','night']).default('magazine'),
+  accent: z.enum(['auto','violet','coral','emerald','rose','amber','graphite']).default('auto'),
+  articleStyle: z.enum(['studio','paper','night']).default('studio'),
+  articleAccent: z.enum(['auto','violet','coral','emerald','rose','amber','graphite']).default('auto'),
 }).superRefine((value,ctx)=>{
   const validTopics = industries.filter(i=>(value.industries as string[]).includes(i.id)).flatMap(i=>i.topics.map(t=>t[0] as string));
   if(value.subtopics.some(t=>!validTopics.includes(t))) ctx.addIssue({code:'custom',message:'선택한 분야에 맞는 세부 주제를 고르세요.',path:['subtopics']});
@@ -67,7 +70,7 @@ export const newsletterSelectionSchema = z.object({
   if(new Set(value.industries).size!==value.industries.length||new Set(value.countries).size!==value.countries.length) ctx.addIssue({code:'custom',message:'같은 항목이 두 번 선택되었습니다.',path:['industries']});
 });
 export type NewsletterSelection = z.infer<typeof newsletterSelectionSchema>;
-export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine'};
+export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine',accent:'auto',articleStyle:'studio',articleAccent:'auto'};
 // Newsletter looks a reader can pick; the markup is shared and each theme is a stylesheet layer.
 export const themes=[
   ['magazine','매거진','종이 질감과 큰 제호, 주황 포인트'],
@@ -76,6 +79,19 @@ export const themes=[
   ['night','나이트','어두운 바탕과 선명한 강조색'],
 ] as const;
 export type Theme=typeof themes[number][0];
+// Point colours a reader can lay over any newsletter look or article style; "auto" keeps the look's own colour.
+export const accents=[
+  ['auto','기본','디자인 고유의 색'],['violet','바이올렛','#6b5cf0'],['coral','코랄','#e0612f'],['emerald','에메랄드','#12936b'],
+  ['rose','로즈','#d6456f'],['amber','앰버','#c98a12'],['graphite','그래파이트','#2b2b31'],
+] as const;
+export type Accent=typeof accents[number][0];
+// Looks for the article (explainer) pages.
+export const articleStyles=[
+  ['studio','스튜디오','사이트와 같은 먹색 머리, 흰 지면'],
+  ['paper','페이퍼','따뜻한 종이색, 잉크 같은 검정 글자'],
+  ['night','나이트','눈이 편한 어두운 지면'],
+] as const;
+export type ArticleStyle=typeof articleStyles[number][0];
 // Plans: a free reader gets one trial edition of up to 10 stories; a subscriber gets three fresh editions a day of up to 15.
 export const plans={free:{label:'무료',stories:10,generations:1,per:'total'},subscriber:{label:'구독',stories:15,generations:3,per:'day'}} as const;
 export type Plan=keyof typeof plans;
@@ -96,13 +112,13 @@ export function countryName(code:string){return code==='KR'?'대한민국':count
 export function regionLabel(s:NewsletterSelection){return s.scope==='global'?'전 세계':s.scope==='kr'?'대한민국':s.countries.map(countryName).join(' · ');}
 export function topicLabels(s:NewsletterSelection){return s.subtopics.map(id=>allTopics.find(t=>t[0]===id)?.[1]||id);}
 export function selectionQuery(s:NewsletterSelection){
-  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday),theme:s.theme}).toString();
+  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday),theme:s.theme,accent:s.accent,art:s.articleStyle,artaccent:s.articleAccent}).toString();
 }
 export function selectionFromQuery(p:Record<string,string|string[]|undefined>):NewsletterSelection{
   const get=(key:string,fallback:string)=>typeof p[key]==='string'?p[key] as string:fallback;
   const list=(key:string,legacy:string,fallback:string)=>get(key,get(legacy,fallback)).split(',').filter(Boolean);
   const fresh=p.industries===undefined&&p.industry===undefined;
-  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine')});
+  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine'),accent:get('accent','auto'),articleStyle:get('art','studio'),articleAccent:get('artaccent','auto')});
   return parsed.success?parsed.data:defaultSelection;
 }
 

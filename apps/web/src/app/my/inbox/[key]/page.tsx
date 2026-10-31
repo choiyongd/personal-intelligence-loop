@@ -9,7 +9,7 @@ import {editionStories} from '@/lib/articles';
 import {inboxIssues,readInbox} from '@/lib/inbox';
 import {mailThisEdition} from '@/app/beta-actions';
 
-const mailNotice:Record<string,string>={sent:'이 호를 확인된 메일 주소로 보냈어요.','need-email':'메일로 받으려면 먼저 나의 뉴스레터에서 메일 주소를 확인해 주세요.',unavailable:'메일 발송은 운영 설정(저장소와 메일 발송 계정)이 끝나면 열립니다.',error:'메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.'};
+const mailNotice:Record<string,string>={sent:'이 호를 메일로도 보냈어요.',check:'확인 메일을 보냈어요. 메일의 버튼을 누르면 이 호가 바로 메일로 도착합니다.',wait:'확인 메일을 방금 보냈어요. 1분 뒤에 다시 시도해 주세요.','bad-email':'메일 주소 형식을 확인해 주세요. 이 호는 메일함에 저장됐어요.','need-email':'메일로 받으려면 나의 뉴스레터의 만들기 칸에서 메일 주소를 적어 주세요.',unavailable:'메일 발송은 운영 설정(저장소와 메일 발송 계정)이 끝나면 열립니다.',error:'메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.'};
 export const metadata={title:'다시 보기 · Personal Intelligence Loop'};
 export default async function InboxIssuePage({params,searchParams}:{params:Promise<{key:string}>;searchParams:Promise<{mail?:string}>}){
   const beta=await betaReader();

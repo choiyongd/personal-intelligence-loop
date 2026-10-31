@@ -46,7 +46,7 @@ export function NewsletterPaper({selection,stories,editorial=false,compact=false
   const topics=topicLabels(selection);
   const issued=issuedAt||new Date();
   const cadence=selection.cadence==='daily'?'Daily':'Weekly';
-  return <section className={`nl theme-${selection.theme||'magazine'}${compact?' nl-compact':''}`} aria-label="맞춤 뉴스레터 지면">
+  return <section className={`nl theme-${selection.theme||'magazine'} accent-${selection.accent||'auto'}${compact?' nl-compact':''}`} aria-label="맞춤 뉴스레터 지면">
     <header className="nl-mast">
       <div className="nl-mast-top"><p>{editorial?`${levelLabel(selection.level)} 수준으로 다시 쓴`:'수집 자료로 엮은'}<br/><b>{regionLabel(selection)} 에디션</b></p><span>{new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:'Asia/Seoul'}).format(new Date(issued)).toUpperCase()}</span></div>
       <div className="nl-mast-row"><p className="nl-mast-note">your curiosity,<br/>your own<br/>edition</p><h2 className="nl-title">{selection.name}</h2><p className="nl-vol"><span>{selection.cadence==='daily'?'NO.':'VOL.'}</span>{issueNo(issued,selection.cadence)}</p></div>
