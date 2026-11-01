@@ -8,6 +8,7 @@ import {planLabel,scheduleLabel,weekdays,weekdaysEn} from '@/lib/newsletter';
 import {zonedNow} from '@/lib/kst';
 import {getL} from '@/lib/locale';
 import {intlLocale,lx,type Locale} from '@/lib/i18n';
+import {ensureArticles} from '@/lib/live/registry';
 
 export async function generateMetadata(){return {title:`${(await getL()).L('메일함','Mailbox')} · Personal Intelligence Loop`};}
 const views=[['day','일자별','By day'],['calendar','날짜(달력)','Calendar'],['month','월별','By month']] as const;
@@ -35,6 +36,7 @@ export default async function Inbox({searchParams}:{searchParams:Promise<{view?:
   const dt=(d:string)=>dayTitle(d,loc),mt=(m:string)=>monthTitle(m,loc),wd=en?weekdaysEn:weekdays;
   const view:View=views.some(v=>v[0]===q.view)?q.view as View:'day';
   const issues=inboxIssues(selection,store);
+  await ensureArticles(issues.flatMap(i=>i.articleIds.slice(0,1)));
   const today=zonedNow(new Date(),tz).date,month=/^\d{4}-\d{2}$/.test(q.month||'')?q.month!:today.slice(0,7);
   const date=/^\d{4}-\d{2}-\d{2}$/.test(q.date||'')?q.date:undefined;
   const shown=date?issues.filter(i=>i.date===date):issues;

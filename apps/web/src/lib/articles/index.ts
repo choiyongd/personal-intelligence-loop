@@ -24,7 +24,14 @@ export type {Article} from './types';
 import {hotPicks as allHotPicks,HOT_PER_EDITION} from './hot';
 export {HOT_BASIS,HOT_PER_EDITION,hotBasis} from './hot';
 export const allArticles:Article[]=[...technology,...businessFinance,...scienceHealth,...energyPolicy,...design,...europe,...southAmerica,...northAmerica,...eurasia,...mobility,...society,...moreCulture,...moreLife,...moreEnvironment,...moreWork,...moreIndustry,...moreEconomy];
-export function articleById(id:string){return allArticles.find(a=>a.id===id);}
+// Articles written each morning from new official releases (lib/live). The registry fills this list on the server;
+// without it (no database, or before the first run) editions use the written explainers only.
+let live:Article[]=[];
+let staleHook:(()=>void)|null=null;
+export function setLiveArticles(list:Article[]){live=list;}
+export function setLiveStaleHook(hook:()=>void){staleHook=hook;}
+export function liveArticles(){staleHook?.();return live;}
+export function articleById(id:string){return allArticles.find(a=>a.id===id)||liveArticles().find(a=>a.id===id);}
 // English text for an explainer, when it has been translated; facts, sources and citation numbers stay the same.
 export const hasEnglish=(id:string)=>Boolean(english[id]);
 export function localize(a:Article,loc:Locale):Article{
@@ -41,12 +48,35 @@ export const hotPicks=allHotPicks;
 const articleTopicField=new Map(industries.flatMap(i=>i.topics.map(t=>[t[0] as string,i.id as string] as const)));
 
 // Field and topic decide what is in the edition; region only decides the order, so a narrow region never empties it.
-export function articlesFor(s:NewsletterSelection){
+function scopeOf(s:NewsletterSelection){
   const fields=s.industries as string[];
   // A field with none of its own topics picked contributes all its topics, so adding a field always adds reading.
   const fieldTopics=(field:string)=>allTopics.filter(t=>articleTopicField.get(t[0])===field).map(t=>t[0]);
   const narrowed=new Set(fields.filter(f=>fieldTopics(f).some(t=>s.subtopics.includes(t))));
-  const inScope=allArticles.filter(a=>inLanguage(a,s.lang)&&fields.includes(a.industry)&&(!narrowed.has(a.industry)||s.subtopics.includes(a.topic)));
+  return (a:Article)=>inLanguage(a,s.lang)&&fields.includes(a.industry)&&(!narrowed.has(a.industry)||s.subtopics.includes(a.topic));
+}
+const DAY0=Date.UTC(2026,0,1);
+const shiftDate=(date:string,days:number)=>new Date(Date.parse(`${date}T00:00:00Z`)+days*864e5).toISOString().slice(0,10);
+const seedDate=(seed:number)=>new Date(DAY0+Math.floor(seed/4)*864e5).toISOString().slice(0,10);
+const todayKst=()=>new Date(Date.now()+9*36e5).toISOString().slice(0,10);
+// Live stories for an edition dated `date`: the last three days for daily readers, the last week for weekly ones.
+// Region matches first, newest first. Content type is not applied, so a new release always reaches its field.
+export function liveFor(s:NewsletterSelection,date:string){
+  const from=shiftDate(date,s.cadence==='weekly'?-6:-2);
+  const inScope=scopeOf(s);
+  const wanted=selectedCountries(s);
+  const near=(a:Article)=>wanted.length&&a.regions.some(r=>wanted.includes(r))?0:1;
+  return liveArticles().filter(a=>a.asOf>=from&&a.asOf<=date&&inScope(a))
+    .map((a,i)=>({a,i})).sort((x,y)=>near(x.a)-near(y.a)||y.a.asOf.localeCompare(x.a.asOf)||x.i-y.i).map(x=>x.a);
+}
+// Up to half of an edition (after the hot picks) is today's news; the rest stays the written explainers.
+const liveShare=(size:number)=>Math.ceil(size/2);
+export function articlesFor(s:NewsletterSelection){
+  const fresh=liveFor(s,todayKst());
+  return [...fresh,...staticFor(s).filter(a=>!fresh.includes(a))];
+}
+function staticFor(s:NewsletterSelection){
+  const inScope=allArticles.filter(scopeOf(s));
   const typed=inScope.filter(a=>s.contentTypes.includes(a.type));
   const pool=typed.length?typed:inScope;
   const wanted=selectedCountries(s);
@@ -61,13 +91,14 @@ function rotate<T>(list:T[],by:number){if(!list.length)return list;const k=((by%
 // so the inbox, a re-read and the emailed copy of the same issue always agree without storing anything.
 export function pickEdition(s:NewsletterSelection,size:number,seed:number){
   const hot=s.scope==='global'?rotate(hotPicksFor(s.lang).map(h=>h.id),seed*HOT_PER_EDITION).slice(0,HOT_PER_EDITION):[];
-  const rest=articlesFor(s).filter(a=>!hot.includes(a.id));
+  const fresh=liveFor(s,seedDate(seed)).slice(0,liveShare(size-hot.length)).map(a=>a.id);
+  const rest=staticFor(s).filter(a=>!hot.includes(a.id));
   const wanted=selectedCountries(s);
   // Region matches stay ahead of the rest; each group turns by the seed so every new edition opens differently.
   const near=wanted.length?rest.filter(a=>a.regions.some(r=>wanted.includes(r))):rest;
   const far=wanted.length?rest.filter(a=>!near.includes(a)):[];
   const step=Math.max(1,size-hot.length);
-  return [...hot,...rotate(near,seed*step).map(a=>a.id),...rotate(far,seed*step).map(a=>a.id)].slice(0,size);
+  return [...hot,...fresh,...rotate(near,seed*step).map(a=>a.id),...rotate(far,seed*step).map(a=>a.id)].slice(0,size);
 }
 // Day number since 2026-01-01 in Korea time; editions on the same day differ by slot.
 export function editionSeed(date:string,slot=0){return Math.round((Date.parse(`${date}T00:00:00Z`)-Date.UTC(2026,0,1))/864e5)*4+slot;}
@@ -85,7 +116,7 @@ export function articleStory(raw:Article,level:Level,loc:Locale='ko'):Newsletter
   const publishers=[...new Set(a.sources.map(s=>s.publisher))];
   return {
     id:a.id,title:a.title,description:a.dek,industry:a.industry,topics:[a.topic],countries:a.regions.filter(r=>r!=='GLOBAL'),
-    type:a.type,source:publishers.slice(0,2).join(' · ')+(publishers.length>2?(loc==='en'?` +${publishers.length-2} more`:` 외 ${publishers.length-2}곳`):''),date:`${a.asOf}T00:00:00+09:00`,
+    type:a.type,source:publishers.slice(0,2).join(' · ')+(publishers.length>2?(loc==='en'?` +${publishers.length-2} more`:` 외 ${publishers.length-2}곳`):'')+(a.live?(loc==='en'?' · AI-written from official releases':' · 공식 발표 기반 AI 작성'):''),date:`${a.asOf}T00:00:00+09:00`,
     href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,thoughts:a.thoughts,easy:a.pages[0]?.easy||undefined,deep:a.deepDive?.heading,glossary:a.glossary,
     evidence:a.sources.map(src=>({source:src.publisher,url:src.url,title:src.title})),
   };

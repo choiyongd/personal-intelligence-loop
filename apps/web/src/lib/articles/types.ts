@@ -14,4 +14,6 @@ export type Article={
   keyFacts:{label:string;value:string;source:number}[];
   questions:string[];thoughts:string[];
   sources:ArticleSource[];
+  // Set on articles written by the daily live pipeline from that day's official releases (see lib/live).
+  live?:{model:string;writtenAt:string};
 };
