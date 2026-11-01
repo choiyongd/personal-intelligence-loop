@@ -6,6 +6,7 @@ import {ThemePicker} from '@/components/theme-picker';
 import {MarkRead} from '@/components/mark-read';
 import {betaReader,draftSelection} from '@/lib/beta';
 import {editionStories} from '@/lib/articles';
+import {ensureArticles} from '@/lib/live/registry';
 import {inboxIssues,readInbox} from '@/lib/inbox';
 import {mailThisEdition} from '@/app/beta-actions';
 import {getL} from '@/lib/locale';
@@ -22,6 +23,7 @@ export default async function InboxIssuePage({params,searchParams}:{params:Promi
   const issues=inboxIssues(selection,await readInbox()),index=issues.findIndex(i=>i.key===key);
   if(index<0)notFound();
   const issue=issues[index],newer=issues[index-1],older=issues[index+1];
+  await ensureArticles(issue.articleIds);
   const when=new Intl.DateTimeFormat(intlLocale(loc),{timeZone:selection.tz,year:'numeric',month:'long',day:'numeric',weekday:'long',hour:'numeric',minute:'2-digit'}).format(new Date(issue.at));
   return <div className="site-page"><PublicNav active="my"/><main id="main" className="newsletter-view">
     <MarkRead editionKey={issue.key} unread={!issue.read}/>

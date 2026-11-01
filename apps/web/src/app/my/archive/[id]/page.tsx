@@ -6,12 +6,14 @@ import {betaReader} from '@/lib/beta';
 import {currentReader,deliveryConfigured,getIssue} from '@/lib/beta-store';
 import {editionStories} from '@/lib/articles';
 import {getL} from '@/lib/locale';
+import {ensureArticles} from '@/lib/live/registry';
 
 export default async function ArchivedIssue({params}:{params:Promise<{id:string}>}){
   if(!(await betaReader()))redirect('/login#beta');
   const reader=deliveryConfigured()?await currentReader():null;
   const issue=reader?await getIssue(reader.id,(await params).id):null;
   if(!issue)notFound();
+  await ensureArticles(issue.article_ids);
   // The issue keeps the article ids and selection it was made with, so it reads the same later.
   const stories=editionStories(issue.selectionParsed,issue.article_ids),{L}=await getL();
   return <div className="site-page"><PublicNav active="my"/><main id="main" className="newsletter-view"><header className="newsletter-view-heading"><div><p className="eyebrow">ARCHIVED ISSUE · {issue.issue_date.replaceAll('-','.')}</p><h1>{issue.title}</h1><p>{issue.kind==='scheduled'?L('정기 호','Scheduled issue'):L('직접 보관한 호','Saved issue')} · {stories.length}{L('편',' stories')}</p></div><Link className="button secondary" href="/my/archive">{L('지난 호 목록','Past issues')}</Link></header>

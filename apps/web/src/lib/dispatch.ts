@@ -1,4 +1,5 @@
 import 'server-only';
+import {refreshLive} from './live/registry';
 import {admin,createIssue,dueReaders,type Reader} from './beta-store';
 import {articleById,hotFor,type Article} from './articles';
 import {appOrigin} from './env';
@@ -14,6 +15,8 @@ export function unsubscribeUrl(r:Pick<Reader,'id'|'unsubscribe_token'>){return `
 // At-least-once delivery with a cap: an issue is claimed by bumping `attempts` with a compare-and-set,
 // so overlapping runs cannot both send it, and a failed send is retried by later runs the same day.
 export async function dispatchDue(now=new Date()){
+  // Today's live stories must be in memory before editions are picked.
+  await refreshLive(true);
   const summary={due:0,sent:0,skipped:0,failed:0};
   let readers=await dueReaders(now);
   // With paid billing on, only a paid subscription earns scheduled mail; plans switched on for free during the beta do not.

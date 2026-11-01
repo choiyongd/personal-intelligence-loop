@@ -1,0 +1,33 @@
+# Every morning in Korea (05:07 KST) collect new official releases, let the editor pick the day's stories,
+# then write them a few at a time. Uses the same repository secrets as the newsletter dispatch:
+# DISPATCH_URL (its /api/dispatch is swapped for /api/live) and CRON_SECRET.
+name: live-news
+on:
+  schedule:
+    - cron: '7 20 * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: live-news
+  cancel-in-progress: false
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Collect, plan and write
+        env:
+          DISPATCH_URL: ${{ secrets.DISPATCH_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$DISPATCH_URL" ] || [ -z "$CRON_SECRET" ]; then echo "DISPATCH_URL/CRON_SECRET not set; skipping."; exit 0; fi
+          LIVE_URL="${DISPATCH_URL%/api/dispatch}/api/live"
+          call() { curl --fail-with-body -sS -X POST --retry 2 --retry-all-errors --max-time 320 -H "Authorization: Bearer $CRON_SECRET" "$LIVE_URL?step=$1"; }
+          echo "== collect"; call collect | tee collect.json; echo
+          echo "== plan"; call plan | tee plan.json; echo
+          for i in 1 2 3 4 5 6 7 8; do
+            echo "== write $i"; out=$(call write) || { echo "$out"; exit 1; }
+            echo "$out"
+            remaining=$(echo "$out" | jq -r '.remaining // 0')
+            [ "$remaining" = "0" ] && break
+          done

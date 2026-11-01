@@ -4,6 +4,7 @@ import {admin,currentReader,deliveryConfigured,ensureReader,hash,newToken,type R
 import {mailConfigured,sendMail} from './mailer';
 import {renderConfirmEmail,renderIssueEmail} from './issue-email';
 import {articleById,hotFor,type Article} from './articles';
+import {ensureArticles} from './live/registry';
 import {unsubscribeUrl} from './dispatch';
 import {scheduleLabel,type NewsletterSelection,type Plan} from './newsletter';
 import {appOrigin} from './env';
@@ -50,6 +51,7 @@ export async function stopMail(){
 // Mail one edition to the reader's confirmed address. Returns false when there is no confirmed address or mail is not set up.
 export async function mailEdition(reader:Reader|null,name:string,selection:NewsletterSelection,ids:string[],key:string){
   if(!mailReady()||!reader?.email||!reader.email_confirmed_at)return false;
+  await ensureArticles(ids);
   const articles=ids.map(articleById).filter((a):a is Article=>Boolean(a));
   if(!articles.length)return false;
   const origin=appOrigin(),unsub=unsubscribeUrl(reader);

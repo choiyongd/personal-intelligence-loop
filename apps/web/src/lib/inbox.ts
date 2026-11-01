@@ -7,6 +7,7 @@ import {kstNow,zonedAt,zonedNow} from './kst';
 import {currentReader} from './beta-store';
 import {billingConfigured,subscriptionActive,subscriptionFor} from './billing';
 import {plans,type NewsletterSelection,type Plan} from './newsletter';
+import {liveArticles} from './articles';
 
 // The beta inbox lives in one browser cookie, like the beta identity itself.
 // Scheduled editions are derived from the schedule and the date, so they cost no storage; the cookie keeps
@@ -86,7 +87,7 @@ export function scheduledIds(s:NewsletterSelection,date:string){return pickEditi
 export function inboxIssues(s:NewsletterSelection,store:InboxStore,now=new Date()):InboxIssue[]{
   const read=new Set(store.read);
   const stored=store.issues.map(i=>({key:i.k,kind:i.t==='m'?'manual' as const:'scheduled' as const,date:i.d,at:i.at*1000,
-    articleIds:i.c.match(/.{5}/g)?.map(c=>byCode.get(c)).filter((x):x is string=>Boolean(x))||[],read:i.t==='m'||read.has(i.k),stored:true}));
+    articleIds:i.c.match(/.{5}/g)?.map(c=>byCode.get(c)||liveArticles().find(a=>code(a.id)===c)?.id).filter((x):x is string=>Boolean(x))||[],read:i.t==='m'||read.has(i.k),stored:true}));
   const have=new Set(stored.map(i=>i.key));
   const virtual=arrivedDates(s,store,now).map(d=>scheduledKey(d)).filter(k=>!have.has(k)).map(k=>{
     const date=`${k.slice(2,6)}-${k.slice(6,8)}-${k.slice(8,10)}`;
