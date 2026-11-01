@@ -70,7 +70,7 @@ export function articleStory(a:Article,level:Level):NewsletterStory{
   return {
     id:a.id,title:a.title,description:a.dek,industry:a.industry,topics:[a.topic],countries:a.regions.filter(r=>r!=='GLOBAL'),
     type:a.type,source:publishers.slice(0,2).join(' · ')+(publishers.length>2?` 외 ${publishers.length-2}곳`:''),date:`${a.asOf}T00:00:00+09:00`,
-    href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,thoughts:a.thoughts,
+    href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,thoughts:a.thoughts,easy:a.pages[0]?.easy||undefined,deep:a.deepDive?.heading,glossary:a.glossary,
     evidence:a.sources.map(src=>({source:src.publisher,url:src.url,title:src.title})),
   };
 }

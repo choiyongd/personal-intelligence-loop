@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import {TermFit} from '@/components/term-fit';
 import {HOT_BASIS} from '@/lib/articles/hot';
 import {lensFor,fill,josa,shortTitle} from '@/lib/discussion';
-import {continentOf,contentLabels,countryName,industryFor,levelLabel,regionLabel,topicLabels,type NewsletterSelection,type NewsletterStory} from '@/lib/newsletter';
+import {withTerms} from './terms';
+import {wordsPerLevel,continentOf,contentLabels,countryName,industryFor,levelLabel,regionLabel,topicLabels,type NewsletterSelection,type NewsletterStory} from '@/lib/newsletter';
 
 function date(raw:string|Date,opts:Intl.DateTimeFormatOptions={month:'long',day:'numeric'}){return new Intl.DateTimeFormat('ko-KR',{...opts,timeZone:'Asia/Seoul'}).format(new Date(raw));}
 function usableUrl(raw?:string){try{const u=new URL(raw||'');return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:undefined;}catch{return undefined;}}
@@ -13,6 +15,15 @@ function Category({story}:{story:NewsletterStory}){return <span className="nl-ca
 function Meta({story}:{story:NewsletterStory}){return <p className="nl-meta"><span>{story.source||'출처 확인'}</span>{story.sourceCount?<span>출처 {story.sourceCount}개</span>:null}<time dateTime={story.date}>{story.href?`${date(story.date)} 기준`:date(story.date)}</time></p>;}
 function Evidence({story}:{story:NewsletterStory}){
   return story.evidence.length>0?<details className="nl-evidence"><summary>근거 출처 {story.evidence.length}개 보기</summary><ul>{story.evidence.map((e,i)=><li key={`${e.source}-${i}`}><a href={usableUrl(e.url)} target="_blank" rel="noopener noreferrer">{e.source} · {e.title} ↗</a></li>)}</ul></details>:null;
+}
+// A word list for the edition: hard terms from the stories, more of them for readers who chose the intro level.
+function Words({stories,selection}:{stories:NewsletterStory[];selection:NewsletterSelection}){
+  const seen=new Set<string>(),items:{term:string;meaning:string;from:NewsletterStory}[]=[];
+  for(let round=0;round<3&&items.length<wordsPerLevel[selection.level];round++)
+    for(const s of stories){const g=s.glossary?.[round];if(g&&!seen.has(g.term)&&items.length<wordsPerLevel[selection.level]){seen.add(g.term);items.push({...g,from:s});}}
+  if(!items.length)return null;
+  return <section className="nl-words" aria-label="이번 호의 낱말"><div className="nl-words-head"><h3>이번 호의 낱말 <small>{items.length}</small></h3><p className="nl-think-lead">{levelLabel(selection.level)} 수준에 맞춰 골랐어요. 뜻을 가리고 먼저 설명해 본 뒤 확인하면 어휘가 오래 남습니다.</p></div>
+    <dl>{items.map(w=><div key={w.term}><dt>{w.term}</dt><dd>{w.meaning}<small>{shortTitle(w.from.title)}</small></dd></div>)}</dl></section>;
 }
 // After reading: fact checks drawn from the leading stories; prompts that widen the view in three
 // directions (out to the world, across stories, back to the reader); and topics to talk over with others.
@@ -76,9 +87,11 @@ export function NewsletterPaper({selection,stories,editorial=false,compact=false
   const fields=selection.industries.map(id=>industryFor(id).label);
   const topics=topicLabels(selection);
   const issued=issuedAt||new Date();
+  // Hard terms are marked once per edition; readers can switch this off in settings.
+  const seen=new Set<string>(),desc=(st:NewsletterStory)=>selection.terms==='off'||!st.description?st.description:withTerms(st.description,st.glossary,seen,st.id);
   const cadence=selection.cadence==='daily'?'Daily':'Weekly';
   return <section className={`nl theme-${selection.theme||'magazine'} accent-${selection.accent||'auto'}${compact?' nl-compact':''}`} aria-label="맞춤 뉴스레터 지면">
-    <header className="nl-mast">
+    <TermFit/><header className="nl-mast">
       <div className="nl-mast-top"><p>{editorial?`${levelLabel(selection.level)} 수준으로 다시 쓴`:'수집 자료로 엮은'}<br/><b>{regionLabel(selection)} 에디션</b></p><span>{new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:'Asia/Seoul'}).format(new Date(issued)).toUpperCase()}</span></div>
       <div className="nl-mast-row"><p className="nl-mast-note">your curiosity,<br/>your own<br/>edition</p><h2 className="nl-title">{selection.name}</h2><p className="nl-vol"><span>{selection.cadence==='daily'?'NO.':'VOL.'}</span>{issueNo(issued,selection.cadence)}</p></div>
       <div className="nl-teasers"><p><span className="nl-teaser-label">{cadence}<br/>Issue</span><b>01</b><span>{fields.join(' · ')||'나의 분야'}</span></p><p><span className="nl-teaser-label">{cadence}<br/>Issue</span><b>02</b><span>{topics.slice(0,4).join(' · ')||date(issued,{year:'numeric',month:'long',day:'numeric',weekday:'long'})}</span></p></div>
@@ -88,17 +101,17 @@ export function NewsletterPaper({selection,stories,editorial=false,compact=false
         <article className="nl-lead"><div className="nl-art" aria-hidden="true"><i/><i/><i/></div><div className="nl-lead-body"><p className="nl-label">COVER STORY</p><Category story={lead}/><h3><StoryTitle story={lead}/></h3>{lead.hot&&!compact&&<p className="nl-hot-reason">왜 화제인가 · {lead.hot.reason}</p>}</div></article>
         <div className="nl-heads">
           <p className="nl-heads-label">HEADLINE NEWS</p>
-          {heads.map(s=><article key={s.id}><Category story={s}/><h4><StoryTitle story={s}/></h4>{!compact&&(s.hot?<p className="nl-hot-reason">{s.hot.reason}</p>:s.description&&<p>{s.description}</p>)}</article>)}
+          {heads.map(s=><article key={s.id}><Category story={s}/><h4><StoryTitle story={s}/></h4>{!compact&&(s.hot?<p className="nl-hot-reason">{s.hot.reason}</p>:s.description&&<p>{desc(s)}</p>)}</article>)}
           {!compact&&<dl className="nl-colophon"><div><dt>발행일</dt><dd>{date(issued,{year:'numeric',month:'2-digit',day:'2-digit'})}</dd></div><div><dt>구성</dt><dd>읽을거리 {stories.length}편</dd></div><div><dt>지역</dt><dd>{countries.length?countries.slice(0,3).map(countryName).join(' · '):'전 세계'}</dd></div></dl>}
         </div>
       </div>
-      {!compact&&<section className="nl-story" aria-label="커버 스토리 요약">{lead.description&&<p className="nl-deck">{lead.description}</p>}<Meta story={lead}/>{lead.href&&<Link className="nl-read" href={lead.href}>전문 읽기 →</Link>}<Evidence story={lead}/></section>}
-      {cards.length>0&&!compact&&<section className="nl-cards" aria-label="함께 읽을 이야기"><h3 className="nl-section-title">함께 읽을 이야기</h3><div>{cards.map((s,i)=><article key={s.id}><b className="nl-card-no">{String(i+4).padStart(2,'0')}</b><Category story={s}/><h4><StoryTitle story={s}/></h4>{s.hot?<p className="nl-hot-reason">{s.hot.reason}</p>:s.description&&<p>{s.description}</p>}</article>)}</div></section>}
+      {!compact&&<section className="nl-story" aria-label="커버 스토리 요약">{lead.description&&<p className="nl-deck">{desc(lead)}</p>}{selection.level==='intro'&&lead.easy&&<p className="nl-easy"><b>쉽게 말하면</b>{lead.easy}</p>}{selection.level==='expert'&&lead.deep&&<p className="nl-easy nl-deep"><b>심화 장</b>{lead.deep}</p>}<Meta story={lead}/>{lead.href&&<Link className="nl-read" href={lead.href}>전문 읽기 →</Link>}<Evidence story={lead}/></section>}
+      {cards.length>0&&!compact&&<section className="nl-cards" aria-label="함께 읽을 이야기"><h3 className="nl-section-title">함께 읽을 이야기</h3><div>{cards.map((s,i)=><article key={s.id}><b className="nl-card-no">{String(i+4).padStart(2,'0')}</b><Category story={s}/><h4><StoryTitle story={s}/></h4>{s.hot?<p className="nl-hot-reason">{s.hot.reason}</p>:s.description&&<p>{desc(s)}</p>}</article>)}</div></section>}
       {!compact&&<div className="nl-body">
         <section className="nl-more" aria-label="더 읽을거리"><h3 className="nl-section-title">더 읽을거리</h3>{more.length>0?<ul>{more.map(s=><li key={s.id}><h4><StoryTitle story={s}/></h4><Category story={s}/></li>)}</ul>:<p className="nl-quiet">이번 호의 읽을거리는 위의 {stories.length}편입니다. 주제를 더 고르면 지면이 넓어집니다.</p>}</section>
         <aside className="nl-aside" aria-label="이번 호의 구성"><h3>이번 호의 구성</h3><p className="nl-figure"><b>{stories.length}</b>편의 읽을거리</p><dl>{selection.contentTypes.map(type=><div key={type}><dt>{contentLabels[type]}</dt><dd>{count(type)}</dd></div>)}<div><dt>다룬 지역</dt><dd>{countries.length?countries.slice(0,4).map(countryName).join(' · '):'전 세계'}</dd></div></dl>{stories.some(s=>s.hot)&&<p className="nl-basis">전 세계 에디션은 ‘세계의 화제’ 2편을 꼭 담습니다. {HOT_BASIS}</p>}</aside>
       </div>}
-      {!compact&&<Questions stories={stories}/>}
+      {!compact&&selection.terms!=='off'&&<Words stories={stories} selection={selection}/>}{!compact&&<Questions stories={stories}/>}
     </>:<div className="nl-empty"><span>NO STORIES YET</span><h3>이 관심사를 채울 읽을거리를<br/>기다리고 있어요.</h3><p>{editorial?'선택한 분야·주제·유형에 맞는 해설 기사가 아직 없습니다. 읽을거리 유형이나 주제를 넓혀 보세요.':'선택한 주제·국가·유형에 맞는 수집 자료가 없습니다. 지역 미확인 자료는 특정 국가 지면에서 제외합니다.'}</p></div>}
     {!compact&&<footer className="nl-foot"><b>loop.</b><span>{editorial?'공개 자료를 다시 쓴 해설입니다. 숫자와 날짜는 원문에서 함께 확인하세요.':'원문과 출처를 확인하며 읽는 나의 뉴스레터.'}</span></footer>}
   </section>;

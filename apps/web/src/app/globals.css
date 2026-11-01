@@ -994,3 +994,41 @@ code { overflow-wrap: anywhere; }
 .nl.theme-minimal .nl-widen-label { background: none; color: var(--mg-ink); padding: 0; }
 .nl-talk-own { margin: 2px 0 4px; font-size: 15px; line-height: 1.6; font-weight: 600; color: var(--mg-ink); }
 .nl-talk-wider { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--mg-sub); }
+
+/* Word help: dotted terms with a tip on hover, focus or tap */
+.term { position: relative; display: inline; cursor: help; outline: none; }
+.term-word { text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; text-decoration-color: color-mix(in srgb, var(--ex-accent, var(--mg-accent, #9395ff)) 75%, transparent); }
+.term:hover .term-word, .term:focus .term-word { background: color-mix(in srgb, var(--ex-accent, var(--mg-accent, #9395ff)) 14%, transparent); border-radius: 3px; }
+.term-tip { position: absolute; z-index: 30; left: 50%; bottom: calc(100% + 10px); transform: translate(calc(-50% + var(--shift, 0px)), 6px); width: max-content; max-width: min(300px, 80vw); padding: 10px 12px; border-radius: 10px; background: #17171b; color: #ececf1; font-size: 13px; font-weight: 400; line-height: 1.55; text-align: left; letter-spacing: 0; box-shadow: 0 12px 30px #00000040; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .16s ease, transform .16s ease; white-space: normal; }
+.term-tip b { display: block; font-size: 12px; color: #b9b9ff; margin-bottom: 2px; }
+.term:hover .term-tip, .term:focus .term-tip, .term:focus-within .term-tip { opacity: 1; visibility: visible; transform: translate(calc(-50% + var(--shift, 0px)), 0); }
+.explainer.art-night .term-tip { background: #f2f2f6; color: #17171b; } .explainer.art-night .term-tip b { color: #5b4fe0; }
+@media (max-width: 640px) { .term-tip { max-width: min(280px, calc(100vw - 24px)); } }
+
+/* Level hints and the edition's word list */
+.nl-easy { margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--mg-accent, #9395ff) 10%, var(--mg-card, #fff)); font-size: 15px; line-height: 1.65; color: var(--mg-ink, #17171b); }
+.nl-easy b { margin-right: 8px; color: var(--mg-accent, #6b5cf0); font-size: 13px; }
+.nl-words { margin: 30px 44px 0; padding: 24px 28px; background: var(--mg-card); border-radius: 6px; border-top: 3px solid var(--mg-accent); }
+.nl .nl-words h3 { font-family: var(--mg-display); color: var(--mg-ink); font-size: 24px; margin: 0 0 6px; }
+.nl-words h3 small { font-size: 13px; color: var(--mg-accent); margin-left: 4px; }
+.nl-words dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 22px; margin: 14px 0 0; }
+.nl-words dl>div { padding: 10px 0; border-top: 1px solid var(--mg-rule); }
+.nl-words dt { font-weight: 800; font-size: 16px; color: var(--mg-ink); }
+.nl-words dd { margin: 4px 0 0; font-size: 14px; line-height: 1.6; color: var(--mg-ink); }
+.nl-words dd small { display: block; margin-top: 4px; font-size: 12px; color: var(--mg-sub); }
+.nl.theme-minimal .nl-words { border-top: 1px solid var(--mg-ink); padding-left: 0; padding-right: 0; }
+.nl.theme-bento .nl-words { border: 0; border-radius: 20px; }
+@media (max-width: 760px) { .nl-words { margin: 24px 16px 0; padding: 20px; } }
+.glossary-end { margin: 34px 0 0; }
+.glossary-end summary { cursor: pointer; font-weight: 700; color: var(--nl-deep); font-size: 16px; }
+.glossary-end summary small { font-weight: 400; color: var(--nl-sub); margin-left: 6px; font-size: 13px; }
+.glossary-end[open] summary { margin-bottom: 12px; }
+.terms-switch { margin-top: 20px; }
+.look-note { font-size: 14px; margin: -8px 0 16px; }
+.look-block .level-choices { margin: 0 0 18px; }
+.look-term-preview { background: #fff; color: #1f1f24; padding: 22px 22px 24px; font-size: 16px; line-height: 1.8; overflow: visible; }
+.look-term-preview .lp-kicker { margin: 0 0 10px; font-size: 12px; color: #6b6b75; }
+.look-term-preview p { margin: 0; }
+.look-term-preview .term-tip.lp-open { position: static; display: block; opacity: 1; visibility: visible; transform: none; margin: 10px 0 4px; max-width: none; width: auto; }
+.look-term-preview .nl-easy { margin-top: 12px; }
+@media (max-width: 860px) { .look-block .level-choices { grid-template-columns: 1fr; } }

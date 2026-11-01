@@ -41,11 +41,13 @@ const industryEnum=z.enum(industries.map(i=>i.id) as [IndustryId,...IndustryId[]
 export type RegionCode=typeof continents[number][0]|typeof countries[number][0];
 const countryEnum=z.enum([...continents.map(c=>c[0]),...countries.map(c=>c[0])] as [RegionCode,...RegionCode[]],{message:'국가를 선택하세요.'});
 export const levels=[
-  ['intro','입문','처음 읽는 분야예요. 쉬운 설명과 용어 풀이부터.'],
-  ['practitioner','실무','일과 연결해 읽어요. 사실과 숫자 중심으로.'],
-  ['expert','심화','방법론과 쟁점까지. 한계와 논쟁을 함께.'],
+  ['intro','입문','배경지식이 없어도 괜찮아요. 쉬운 요약과 용어 풀이를 먼저, 낱말을 가장 많이 짚어 드려요.'],
+  ['practitioner','실무','기본 개념은 아는 분께. 사실과 숫자 중심으로, 꼭 필요한 용어만 풀어 드려요.'],
+  ['expert','심화','전문가 수준으로. 방법론과 쟁점, 한계까지 다루는 심화 장이 붙어요.'],
 ] as const;
 export type Level=typeof levels[number][0];
+// How many words each level points out in a newsletter's word list.
+export const wordsPerLevel:Record<Level,number>={intro:10,practitioner:6,expert:4};
 
 export const newsletterSelectionSchema = z.object({
   industries: z.array(industryEnum).min(1,'관심 분야를 하나 이상 선택하세요.').max(16).default(['technology']),
@@ -63,6 +65,8 @@ export const newsletterSelectionSchema = z.object({
   accent: z.enum(['auto','violet','coral','emerald','rose','amber','graphite']).default('auto'),
   articleStyle: z.enum(['studio','paper','night']).default('studio'),
   articleAccent: z.enum(['auto','violet','coral','emerald','rose','amber','graphite']).default('auto'),
+  // Hover or tap a hard term to see its meaning, in articles and newsletters.
+  terms: z.enum(['on','off']).default('on'),
 }).superRefine((value,ctx)=>{
   const validTopics = industries.filter(i=>(value.industries as string[]).includes(i.id)).flatMap(i=>i.topics.map(t=>t[0] as string));
   if(value.subtopics.some(t=>!validTopics.includes(t))) ctx.addIssue({code:'custom',message:'선택한 분야에 맞는 세부 주제를 고르세요.',path:['subtopics']});
@@ -70,7 +74,7 @@ export const newsletterSelectionSchema = z.object({
   if(new Set(value.industries).size!==value.industries.length||new Set(value.countries).size!==value.countries.length) ctx.addIssue({code:'custom',message:'같은 항목이 두 번 선택되었습니다.',path:['industries']});
 });
 export type NewsletterSelection = z.infer<typeof newsletterSelectionSchema>;
-export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine',accent:'auto',articleStyle:'studio',articleAccent:'auto'};
+export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine',accent:'auto',articleStyle:'studio',articleAccent:'auto',terms:'on'};
 // Newsletter looks a reader can pick; the markup is shared and each theme is a stylesheet layer.
 export const themes=[
   ['magazine','매거진','종이 질감과 큰 제호, 주황 포인트'],
@@ -112,13 +116,13 @@ export function countryName(code:string){return code==='KR'?'대한민국':count
 export function regionLabel(s:NewsletterSelection){return s.scope==='global'?'전 세계':s.scope==='kr'?'대한민국':s.countries.map(countryName).join(' · ');}
 export function topicLabels(s:NewsletterSelection){return s.subtopics.map(id=>allTopics.find(t=>t[0]===id)?.[1]||id);}
 export function selectionQuery(s:NewsletterSelection){
-  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday),theme:s.theme,accent:s.accent,art:s.articleStyle,artaccent:s.articleAccent}).toString();
+  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday),theme:s.theme,accent:s.accent,art:s.articleStyle,artaccent:s.articleAccent,terms:s.terms}).toString();
 }
 export function selectionFromQuery(p:Record<string,string|string[]|undefined>):NewsletterSelection{
   const get=(key:string,fallback:string)=>typeof p[key]==='string'?p[key] as string:fallback;
   const list=(key:string,legacy:string,fallback:string)=>get(key,get(legacy,fallback)).split(',').filter(Boolean);
   const fresh=p.industries===undefined&&p.industry===undefined;
-  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine'),accent:get('accent','auto'),articleStyle:get('art','studio'),articleAccent:get('artaccent','auto')});
+  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine'),accent:get('accent','auto'),articleStyle:get('art','studio'),articleAccent:get('artaccent','auto'),terms:get('terms','on')});
   return parsed.success?parsed.data:defaultSelection;
 }
 
@@ -126,6 +130,7 @@ export type NewsletterStory = {
   id:string; title:string; description?:string; industry:IndustryId|'unknown'; topics:string[]; countries:string[];
   type:keyof typeof contentLabels; source:string; date:string; url?:string; eventId?:string; tenant?:string; evidence:{source:string;url:string;title:string}[];
   href?:string; sourceCount?:number; questions?:string[]; thoughts?:string[]; hot?:{rank:number;reason:string};
+  easy?:string; deep?:string; glossary?:{term:string;meaning:string}[];
 };
 function matchesTerm(text:string,term:string){
   const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');

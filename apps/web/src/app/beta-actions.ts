@@ -7,7 +7,7 @@ import {BETA_COOKIE,DRAFT_COOKIE,betaReader,savedOrDefaultSelection} from '@/lib
 import {admin,currentReader,deliveryConfigured,saveReaderSelection} from '@/lib/beta-store';
 import {mailEdition,mailReady,requestMail,stopMail} from '@/lib/edition-mail';
 import {generationsLeft,inboxIssues,newEdition,readInbox,setPlanIn,writeInbox} from '@/lib/inbox';
-import {accents,articleStyles,newsletterSelectionSchema,selectionQuery,themes,type NewsletterSelection} from '@/lib/newsletter';
+import {accents,articleStyles,levels,newsletterSelectionSchema,selectionQuery,themes,type NewsletterSelection} from '@/lib/newsletter';
 
 const draftCookie={path:'/',maxAge:60*60*24*90,sameSite:'lax' as const,httpOnly:false,secure:process.env.VERCEL==='1'};
 async function requireBeta(){const beta=await betaReader();if(!beta)redirect('/login#beta');return beta;}
@@ -118,7 +118,7 @@ export async function saveLook(form:FormData){
   await requireBeta();
   const current=await savedOrDefaultSelection();
   const pick=<T extends string>(key:string,list:readonly (readonly [T,...string[]])[],fallback:T)=>{const v=String(form.get(key)||'');return (list.find(x=>x[0]===v)?.[0])??fallback;};
-  const selection:NewsletterSelection={...current,theme:pick('theme',themes,current.theme),accent:pick('accent',accents,current.accent),articleStyle:pick('articleStyle',articleStyles,current.articleStyle),articleAccent:pick('articleAccent',accents,current.articleAccent)};
+  const selection:NewsletterSelection={...current,theme:pick('theme',themes,current.theme),accent:pick('accent',accents,current.accent),articleStyle:pick('articleStyle',articleStyles,current.articleStyle),articleAccent:pick('articleAccent',accents,current.articleAccent),level:pick('level',levels,current.level),terms:form.get('terms')==='off'?'off':form.get('terms')==='on'?'on':current.terms};
   (await cookies()).set(DRAFT_COOKIE,selectionQuery(selection),draftCookie);
   const reader=deliveryConfigured()?await currentReader():null;
   if(reader)await saveReaderSelection(reader.id,selection);
