@@ -88,13 +88,13 @@ export const newsletterSelectionSchema = z.object({
 export type NewsletterSelection = z.infer<typeof newsletterSelectionSchema>;
 export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine',accent:'auto',articleStyle:'studio',articleAccent:'auto',terms:'on',lang:'ko',tz:'Asia/Seoul'};
 export const defaultNames={ko:'나의 데일리 브리프',en:'My Daily Brief'} as const;
-// Defaults for a visitor's language: an English visitor starts with an English name and US Eastern time.
-export function defaultsFor(loc:Locale):NewsletterSelection{return loc==='en'?{...defaultSelection,name:defaultNames.en,lang:'en',tz:'America/New_York'}:defaultSelection;}
+// Defaults for a visitor's language: an English visitor starts with an English name, US Eastern time and a topic that has English explainers.
+export function defaultsFor(loc:Locale):NewsletterSelection{return loc==='en'?{...defaultSelection,subtopics:['cloud'],name:defaultNames.en,lang:'en',tz:'America/New_York'}:defaultSelection;}
 // Bring a saved selection into the language being used, keeping every choice the reader made on purpose.
 export function inLocale(s:NewsletterSelection,loc:Locale):NewsletterSelection{
   if(s.lang===loc)return s;
   const d=defaultsFor(loc);
-  return {...s,lang:loc,name:s.name===defaultNames[s.lang]?d.name:s.name,tz:s.tz===defaultsFor(s.lang).tz?d.tz:s.tz};
+  return {...s,lang:loc,name:s.name===defaultNames[s.lang]?d.name:s.name,tz:s.tz===defaultsFor(s.lang).tz?d.tz:s.tz,subtopics:s.subtopics.join()===defaultsFor(s.lang).subtopics.join()?d.subtopics:s.subtopics};
 }
 // Newsletter looks a reader can pick; the markup is shared and each theme is a stylesheet layer.
 export const themes=[
@@ -207,7 +207,7 @@ export function selectionFromQuery(p:Record<string,string|string[]|undefined>,lo
   const get=(key:string,fallback:string)=>typeof p[key]==='string'?p[key] as string:fallback;
   const list=(key:string,legacy:string,fallback:string)=>get(key,get(legacy,fallback)).split(',').filter(Boolean);
   const fresh=p.industries===undefined&&p.industry===undefined;
-  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name',base.name),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine'),accent:get('accent','auto'),articleStyle:get('art','studio'),articleAccent:get('artaccent','auto'),terms:get('terms','on'),lang:get('lang',base.lang),tz:get('tz',base.tz)});
+  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?base.subtopics.join(','):'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name',base.name),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine'),accent:get('accent','auto'),articleStyle:get('art','studio'),articleAccent:get('artaccent','auto'),terms:get('terms','on'),lang:get('lang',base.lang),tz:get('tz',base.tz)});
   return parsed.success?parsed.data:base;
 }
 

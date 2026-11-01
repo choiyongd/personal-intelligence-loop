@@ -45,3 +45,33 @@ test('every global hot pick points at an existing explainer',async()=>{
   assert.ok(m.exports.hotPicks.length>=m.exports.HOT_PER_EDITION*2,'enough picks to rotate');
   for(const h of m.exports.hotPicks)assert.ok(articles.some(a=>a.id===h.id&&a.regions.includes('GLOBAL')),h.id);
 });
+
+// English editions: each must mirror its Korean original so citations still point at the same sources.
+const enDir=new URL('../apps/web/src/lib/articles/en/',import.meta.url);
+const enIndex=await readFile(new URL('index.ts',enDir),'utf8');
+const enEntries=[...enIndex.matchAll(/'([a-z-]+-explainer)':(\w+)/g)].map(m=>({id:m[1],name:m[2]}));
+const enFiles=Object.fromEntries([...enIndex.matchAll(/import \{(\w+)\} from '\.\/([a-z-]+)'/g)].map(m=>[m[1],m[2]]));
+const cites=t=>[...t.matchAll(/\[(\d+)\]/g)].map(m=>m[1]).join(',');
+test('english editions cover one explainer per field',()=>{assert.ok(enEntries.length>=16);});
+for(const {id,name} of enEntries){
+  test(`${id}: english edition mirrors the original`,async()=>{
+    const source=await readFile(new URL(`${enFiles[name]}.ts`,enDir),'utf8');
+    const out=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+    const m={exports:{}};new Function('require','module','exports',out)(createRequire(import.meta.url),m,m.exports);
+    const en=m.exports[name],ko=articles.find(a=>a.id===id);
+    assert.ok(en&&ko,'both editions exist');
+    assert.ok(!/[가-힣]/.test(JSON.stringify(en)),'no Korean left');
+    assert.equal(en.pages.length,ko.pages.length,'page count');
+    en.pages.forEach((p,i)=>{
+      assert.equal(p.paragraphs.length,ko.pages[i].paragraphs.length,`paragraphs on page ${i+1}`);
+      p.paragraphs.forEach((t,j)=>assert.equal(cites(t),cites(ko.pages[i].paragraphs[j]),`citations p${i+1}.${j+1}`));
+    });
+    assert.equal(cites(en.deepDive.paragraphs.join(' ')),cites(ko.deepDive.paragraphs.join(' ')),'deep dive citations');
+    assert.deepEqual(en.keyFacts.map(f=>f.source),ko.keyFacts.map(f=>f.source),'key fact sources');
+    assert.equal(en.glossary.length,ko.glossary.length,'glossary');
+    assert.equal(en.questions.length,ko.questions.length,'questions');
+    assert.equal(en.thoughts.length,ko.thoughts.length,'thoughts');
+    for(const k of Object.keys(en.sourceTitles??{}))assert.ok(Number(k)>=1&&Number(k)<=ko.sources.length,`source title ${k}`);
+    for(const [i,s] of ko.sources.entries())if(/[가-힣]/.test(s.title))assert.ok(en.sourceTitles?.[i+1],`english title for source ${i+1}`);
+  });
+}
