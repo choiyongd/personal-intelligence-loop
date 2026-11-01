@@ -1032,3 +1032,17 @@ code { overflow-wrap: anywhere; }
 .look-term-preview .term-tip.lp-open { position: static; display: block; opacity: 1; visibility: visible; transform: none; margin: 10px 0 4px; max-width: none; width: auto; }
 .look-term-preview .nl-easy { margin-top: 12px; }
 @media (max-width: 860px) { .look-block .level-choices { grid-template-columns: 1fr; } }
+
+/* Edition cover image: an illustration drawn per edition from the cover story's field (replaces the circle art). */
+.nl { --art-bg1: #e9e1d3; --art-bg2: #d6c9b4; --art-deep: #3b4048; --art-soft: #f7f3ec; --art-line: #ffffffaa; --art-ink: #1c1b19; }
+.nl.theme-minimal { --art-bg1: #f3f3f3; --art-bg2: #e4e4e4; --art-deep: #2a2a2a; --art-soft: #ffffff; --art-line: #ffffff; --art-ink: #111; }
+.nl.theme-bento { --art-bg1: #e4defc; --art-bg2: #cfc6fb; --art-deep: #4b3fb3; --art-soft: #ffffff; --art-line: #ffffffcc; --art-ink: #1d1b2c; }
+.nl.theme-night { --art-bg1: #1a1f29; --art-bg2: #10141b; --art-deep: #39424f; --art-soft: #2a3240; --art-line: #ffffff33; --art-ink: #eef0f4; }
+.nl .nl-art { display: none; }
+.nl-cover-art { margin: 0; position: relative; min-height: 300px; overflow: hidden; background: var(--art-bg1); }
+.nl-cover-art svg { display: block; width: 100%; height: 100%; min-height: 300px; position: absolute; inset: 0; }
+.nl-cover-art figcaption { position: absolute; left: 12px; bottom: 10px; font-size: 11px; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; background: #00000059; color: #fff; backdrop-filter: blur(6px); }
+.nl.theme-bento .nl-cover-art { border-radius: 20px; }
+.nl.theme-minimal .nl-cover-art { display: block; }
+.nl-compact .nl-cover-art, .nl-compact .nl-cover-art svg { min-height: 200px; }
+@media (max-width: 760px) { .nl-cover-art, .nl-cover-art svg { min-height: 220px; } }

@@ -3,6 +3,7 @@ import {TermFit} from '@/components/term-fit';
 import {HOT_BASIS} from '@/lib/articles/hot';
 import {lensFor,fill,josa,shortTitle} from '@/lib/discussion';
 import {withTerms} from './terms';
+import {CoverArt} from './cover-art';
 import {wordsPerLevel,continentOf,contentLabels,countryName,industryFor,levelLabel,regionLabel,topicLabels,type NewsletterSelection,type NewsletterStory} from '@/lib/newsletter';
 
 function date(raw:string|Date,opts:Intl.DateTimeFormatOptions={month:'long',day:'numeric'}){return new Intl.DateTimeFormat('ko-KR',{...opts,timeZone:'Asia/Seoul'}).format(new Date(raw));}
@@ -87,6 +88,11 @@ export function NewsletterPaper({selection,stories,editorial=false,compact=false
   const fields=selection.industries.map(id=>industryFor(id).label);
   const topics=topicLabels(selection);
   const issued=issuedAt||new Date();
+  // The cover image stands for the edition, so it follows the field most of the reader's own stories belong to
+  // (hot picks open every world edition and would make all covers look alike).
+  const own=stories.filter(x=>!x.hot&&x.industry!=='unknown'),tally=new Map<string,number>();
+  for(const x of own)tally.set(x.industry,(tally.get(x.industry)||0)+1);
+  const artField=[...tally].sort((a,b)=>b[1]-a[1]||selection.industries.indexOf(a[0] as never)-selection.industries.indexOf(b[0] as never))[0]?.[0]||selection.industries[0]||'business';
   // Hard terms are marked once per edition; readers can switch this off in settings.
   const seen=new Set<string>(),desc=(st:NewsletterStory)=>selection.terms==='off'||!st.description?st.description:withTerms(st.description,st.glossary,seen,st.id);
   const cadence=selection.cadence==='daily'?'Daily':'Weekly';
@@ -98,7 +104,7 @@ export function NewsletterPaper({selection,stories,editorial=false,compact=false
     </header>
     {lead?<>
       <div className="nl-cover">
-        <article className="nl-lead"><div className="nl-art" aria-hidden="true"><i/><i/><i/></div><div className="nl-lead-body"><p className="nl-label">COVER STORY</p><Category story={lead}/><h3><StoryTitle story={lead}/></h3>{lead.hot&&!compact&&<p className="nl-hot-reason">왜 화제인가 · {lead.hot.reason}</p>}</div></article>
+        <article className="nl-lead"><CoverArt industry={artField} seed={`${stories.map(x=>x.id).join("")}${new Date(issued).toISOString().slice(0,10)}`} label={`대표 이미지 · ${industryFor(artField).label}`}/><div className="nl-lead-body"><p className="nl-label">COVER STORY</p><Category story={lead}/><h3><StoryTitle story={lead}/></h3>{lead.hot&&!compact&&<p className="nl-hot-reason">왜 화제인가 · {lead.hot.reason}</p>}</div></article>
         <div className="nl-heads">
           <p className="nl-heads-label">HEADLINE NEWS</p>
           {heads.map(s=><article key={s.id}><Category story={s}/><h4><StoryTitle story={s}/></h4>{!compact&&(s.hot?<p className="nl-hot-reason">{s.hot.reason}</p>:s.description&&<p>{desc(s)}</p>)}</article>)}
