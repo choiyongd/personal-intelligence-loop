@@ -1074,3 +1074,24 @@ code { overflow-wrap: anywhere; }
 .feedback-field { display: grid; gap: 8px; }
 .feedback-field textarea, .feedback-field input { width: 100%; font: inherit; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(127,127,127,.4); background: transparent; color: inherit; }
 .feedback-form .primary { justify-self: start; }
+
+/* Seller details, sign-in by mail, card registration and subscription management. */
+.business-info { margin-top: 48px; padding-top: 18px; border-top: 1px solid rgba(127,127,127,.25); font-size: 12px; line-height: 1.8; color: var(--muted); }
+.business-info p { margin: 0 0 6px; }
+.business-info span + span::before { content: ' · '; }
+.business-info a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.mail-login { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(127,127,127,.25); }
+.billing-page .billing-card { border: 1px solid rgba(127,127,127,.3); border-radius: 12px; padding: 24px; margin: 24px 0; }
+.billing-price { font-size: 32px; font-weight: 700; margin: 4px 0 12px; }
+.billing-price small { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+.billing-start { display: grid; gap: 14px; margin-top: 18px; }
+.billing-agree { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.6; }
+.billing-agree input { margin-top: 4px; }
+.billing-agree a { color: var(--accent); }
+.billing-start .primary { justify-self: start; }
+.billing-start .primary:disabled { opacity: .45; cursor: not-allowed; }
+.billing-test { font-size: 12px; color: var(--muted); }
+.billing-facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 12px 0 18px; font-size: 14px; }
+.billing-facts dt { color: var(--muted); }
+.billing-facts dd { margin: 0; }
+.billing-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }

@@ -7,6 +7,8 @@ import {BETA_COOKIE,DRAFT_COOKIE,betaReader,savedOrDefaultSelection} from '@/lib
 import {admin,currentReader,deliveryConfigured,saveReaderSelection} from '@/lib/beta-store';
 import {mailEdition,mailReady,requestMail,stopMail} from '@/lib/edition-mail';
 import {generationsLeft,inboxIssues,newEdition,readInbox,setPlanIn,writeInbox} from '@/lib/inbox';
+import {billingConfigured,cancelSubscription,resumeSubscription} from '@/lib/billing';
+import {requestLoginLink} from '@/lib/account';
 import {accents,articleStyles,levels,newsletterSelectionSchema,selectionQuery,themes,type NewsletterSelection} from '@/lib/newsletter';
 
 const draftCookie={path:'/',maxAge:60*60*24*90,sameSite:'lax' as const,httpOnly:false,secure:process.env.VERCEL==='1'};
@@ -101,8 +103,10 @@ export async function markEditionRead(key:string){
 }
 // Beta stand-in for checkout: switching plans needs no payment while the service is in beta.
 export async function choosePlan(form:FormData){
-  await requireBeta();
   const plan=form.get('plan')==='subscriber'?'subscriber':'free';
+  // With paid billing on, subscribing goes through card registration and leaving is a cancellation.
+  if(billingConfigured())redirect(plan==='subscriber'?'/billing':'/my/billing');
+  await requireBeta();
   await writeInbox(setPlanIn(await readInbox(),plan));
   const reader=deliveryConfigured()?await currentReader():null;
   if(reader)await admin().from('beta_readers').update({plan,updated_at:new Date().toISOString()}).eq('id',reader.id);
@@ -131,4 +135,22 @@ export async function saveLook(form:FormData){
   if(reader)await saveReaderSelection(reader.id,selection);
   revalidatePath('/','layout');
   redirect('/my/settings?saved=1');
+}
+
+export async function cancelPlan(){
+  const reader=billingConfigured()?await currentReader():null;
+  if(reader)await cancelSubscription(reader.id);
+  revalidatePath('/','layout');
+  redirect('/my/billing?state=canceled');
+}
+export async function resumePlan(){
+  const reader=billingConfigured()?await currentReader():null;
+  const ok=reader?await resumeSubscription(reader.id):false;
+  revalidatePath('/','layout');
+  redirect(`/my/billing?state=${ok?'resumed':'resume-failed'}`);
+}
+// "Sign in by mail" on the login page; the answer is the same whether or not the address is known.
+export async function mailLogin(form:FormData){
+  const result=await requestLoginLink(String(form.get('email')||'')).catch(()=>'sent' as const);
+  redirect(`/login?login=${result}#mail-login`);
 }

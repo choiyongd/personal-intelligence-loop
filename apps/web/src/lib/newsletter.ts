@@ -97,7 +97,7 @@ export const articleStyles=[
 ] as const;
 export type ArticleStyle=typeof articleStyles[number][0];
 // Plans: a free reader gets one trial edition of up to 10 stories; a subscriber gets three fresh editions a day of up to 15.
-export const plans={free:{label:'무료',stories:10,generations:1,per:'total'},subscriber:{label:'구독',stories:15,generations:3,per:'day'}} as const;
+export const plans={free:{label:'무료',stories:10,generations:1,per:'total'},subscriber:{label:'구독',stories:15,generations:3,per:'day',price:4900}} as const;
 export type Plan=keyof typeof plans;
 export const weekdays=['일','월','화','수','목','금','토'] as const;
 export function hourLabel(h:number){return `${h<12?'오전':'오후'} ${h%12===0?12:h%12}시`;}
