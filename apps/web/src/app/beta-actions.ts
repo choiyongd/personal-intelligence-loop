@@ -46,6 +46,13 @@ export async function stopEmail(){
   await stopMail();
   redirect('/my?mail=stopped#delivery');
 }
+// Erase the stored address on the reader's request; scheduled issues stay in the archive without it.
+export async function forgetEmail(){
+  if(!mailReady())redirect('/my#delivery');
+  const reader=await currentReader();
+  if(reader)await admin().from('beta_readers').update({email:null,email_confirmed_at:null,delivery_enabled:false,confirm_token_hash:null,confirm_sent_at:null,updated_at:new Date().toISOString()}).eq('id',reader.id);
+  redirect('/my?mail=forgotten#delivery');
+}
 export async function resumeEmail(){
   await requireBeta();
   const reader=await currentReader();

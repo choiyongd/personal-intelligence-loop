@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import type {Reader} from '@/lib/beta-store';
 import {scheduleLabel,type NewsletterSelection,type Plan} from '@/lib/newsletter';
-import {resumeEmail,stopEmail,subscribeEmail} from '@/app/beta-actions';
+import {forgetEmail,resumeEmail,stopEmail,subscribeEmail} from '@/app/beta-actions';
 
 const notices:Record<string,string>={
   check:'확인 메일을 보냈어요. 메일의 버튼을 한 번 누르면 발송이 시작됩니다.',confirmed:'메일 주소가 확인됐어요. 이제 만든 호를 메일로 보내드립니다.','confirmed-sent':'메일 주소가 확인됐고, 가장 최근에 만든 호를 방금 메일로 보냈어요.',on:'메일로 받기를 켰어요.',
   stopped:'메일 발송을 멈췄어요. 보관함은 그대로 남아 있습니다.',resumed:'메일 발송을 다시 시작했어요.',wait:'확인 메일을 방금 보냈어요. 1분 뒤에 다시 시도해 주세요.',
   'bad-email':'메일 주소 형식을 확인해 주세요.',error:'메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.',invalid:'확인 링크가 올바르지 않아요. 다시 신청해 주세요.',
-  expired:'확인 링크가 만료됐어요. 다시 신청해 주세요.',unavailable:'메일 발송은 운영 설정(저장소와 메일 발송 계정)이 끝나면 열립니다.',sent:'방금 만든 호를 메일로도 보냈어요.',
+  expired:'확인 링크가 만료됐어요. 다시 신청해 주세요.',forgotten:'저장된 메일 주소를 지웠어요. 더 이상 메일을 보내지 않습니다.',unavailable:'메일 발송은 운영 설정(저장소와 메일 발송 계정)이 끝나면 열립니다.',sent:'방금 만든 호를 메일로도 보냈어요.',
 };
 export function DeliveryPanel({reader,selection,available,mailReady,plan,notice}:{reader:Reader|null;selection:NewsletterSelection;available:boolean;mailReady:boolean;plan:Plan;notice?:string}){
   const schedule=scheduleLabel(selection);
@@ -20,7 +20,8 @@ export function DeliveryPanel({reader,selection,available,mailReady,plan,notice}
         :reader?.delivery_enabled?<><p className="delivery-state"><b>{reader.email}</b>로 {plan==='subscriber'?<><b>{schedule}</b> 정기 호와 직접 만든 호를</>:'직접 만든 호를'} 받고 있어요.</p><form action={stopEmail}><button className="secondary small">메일 발송 멈추기</button></form></>
         :reader?.email_confirmed_at?<><p className="delivery-state"><b>{reader.email}</b> 발송이 멈춰 있어요.</p><form action={resumeEmail}><button className="primary small">다시 받기</button></form></>
         :<><p className="muted">{pending?<><b>{reader!.email}</b>로 보낸 확인 메일의 버튼을 눌러 주세요. 다른 주소로 바꾸려면 다시 입력하세요.</>:<>메일 주소를 확인해 두면 만든 호와 정기 호를 메일로 보내 드려요. 확인 메일을 한 번 거칩니다.</>}</p>
-          <form action={subscribeEmail} className="delivery-form"><label htmlFor="delivery-email" className="sr-only">메일 주소</label><input id="delivery-email" name="email" type="email" required maxLength={254} placeholder="you@example.com" autoComplete="email" defaultValue={reader?.email||''}/><button className="primary small">{pending?'확인 메일 다시 받기':'메일로 받기'}</button></form></>}
+          <form action={subscribeEmail} className="delivery-form"><label htmlFor="delivery-email" className="sr-only">메일 주소</label><input id="delivery-email" name="email" type="email" required maxLength={254} placeholder="you@example.com" autoComplete="email" defaultValue={reader?.email||''}/><button className="primary small">{pending?'확인 메일 다시 받기':'메일로 받기'}</button></form><p className="mail-privacy">메일 주소는 뉴스레터를 보내는 데에만 쓰고, 언제든 수신 거부·삭제할 수 있어요. <a href="/privacy">개인정보 처리방침</a></p></>}
+        {reader?.email&&<form action={forgetEmail} className="mail-forget"><button className="text-button">메일 주소 삭제</button></form>}
         <p className="delivery-fine">받는 시간과 주기는 <Link href="/customize">관심사 설정</Link>의 마지막 단계에서 바꿉니다.</p>
       </div>
       <div className="delivery-card"><p className="eyebrow">WHAT ARRIVES</p><h2>받는 방식</h2>

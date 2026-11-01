@@ -30,5 +30,5 @@ export default async function Pricing({searchParams}:{searchParams:Promise<{plan
     </div>
     <table className="plan-table"><caption className="sr-only">플랜 비교</caption><thead><tr><th scope="col">기능</th><th scope="col">무료</th><th scope="col">구독</th></tr></thead><tbody>{rows.map(([f,a,b])=><tr key={f}><th scope="row">{f}</th><td>{a}</td><td>{b}</td></tr>)}</tbody></table>
     <p className="muted pricing-fine">베타 기간에는 결제 없이 구독을 켜고 끌 수 있어요. 정식 출시 전에 결제 방식과 가격을 다시 알려 드립니다. 플랜 정보는 이 브라우저에 저장됩니다.</p>
-  </main><footer className="site-footer"><span>loop.</span><span>읽는 만큼, 연결됩니다.</span></footer></div>;
+  </main><footer className="site-footer"><span>loop.</span><span>읽는 만큼, 연결됩니다. · <a href="/privacy">개인정보 처리방침</a></span></footer></div>;
 }

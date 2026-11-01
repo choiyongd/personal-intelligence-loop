@@ -1046,3 +1046,16 @@ code { overflow-wrap: anywhere; }
 .nl.theme-minimal .nl-cover-art { display: block; }
 .nl-compact .nl-cover-art, .nl-compact .nl-cover-art svg { min-height: 200px; }
 @media (max-width: 760px) { .nl-cover-art, .nl-cover-art svg { min-height: 220px; } }
+
+/* Privacy notice next to mail fields, mail address removal, and the privacy policy page. */
+.mail-privacy { font-size: 12px; line-height: 1.5; color: var(--muted, #8f8f9b); margin: 8px 0 0; max-width: 420px; }
+.mail-privacy a, .site-footer a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.mail-forget { margin: 10px 0 0; }
+.mail-forget .text-button { background: none; border: 0; padding: 0; font: inherit; font-size: 12px; color: #8f8f9b; text-decoration: underline; cursor: pointer; }
+.policy-page { max-width: 760px; margin: 0 auto; padding: 56px 20px 80px; line-height: 1.75; }
+.policy-page h1 { margin: 6px 0 12px; }
+.policy-page h2 { font-size: 18px; margin: 36px 0 10px; }
+.policy-page ul { padding-left: 20px; }
+.policy-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0 12px; }
+.policy-table th, .policy-table td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid rgba(127,127,127,.25); }
+@media (max-width: 600px) { .policy-table { display: block; overflow-x: auto; } }
