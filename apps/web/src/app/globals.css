@@ -1095,3 +1095,12 @@ code { overflow-wrap: anywhere; }
 .billing-facts dt { color: var(--muted); }
 .billing-facts dd { margin: 0; }
 .billing-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* Language switcher (Korean / English) in the site header */
+.lang-switch { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid #303038; border-radius: 999px; font-size: 11px; letter-spacing: .04em; white-space: nowrap; }
+.lang-switch a, .lang-switch b { padding: 4px 9px; border-radius: 999px; line-height: 1; }
+.lang-switch b { background: #26262c; color: #fff; font-weight: 600; }
+.lang-switch a { color: #b3b3bd; }
+.lang-switch a:hover, .lang-switch a:focus-visible { color: #fff; }
+.tz-note { display: block; margin-top: 6px; color: #9999a7; font-size: 12px; }
+@media (max-width:600px) { .lang-switch { font-size: 10px; } .lang-switch a, .lang-switch b { padding: 4px 7px; } }

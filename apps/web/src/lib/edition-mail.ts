@@ -7,6 +7,7 @@ import {articleById,hotFor,type Article} from './articles';
 import {unsubscribeUrl} from './dispatch';
 import {scheduleLabel,type NewsletterSelection,type Plan} from './newsletter';
 import {appOrigin} from './env';
+import {intlLocale} from './i18n';
 
 export const mailReady=()=>deliveryConfigured()&&mailConfigured();
 export type MailState={available:boolean;email:string;confirmed:boolean;enabled:boolean};
@@ -35,8 +36,10 @@ export async function requestMail(name:string,selection:NewsletterSelection,plan
   const token=newToken();
   const {error}=await admin().from('beta_readers').update({email:parsed.data,email_confirmed_at:null,delivery_enabled:false,confirm_token_hash:hash(token),confirm_sent_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',reader.id);
   if(error)return 'error';
-  const promise=plan==='subscriber'?`${scheduleLabel(selection)}에 새 호를, 직접 만든 호는 만들 때마다`:'직접 만든 뉴스레터를 만들 때마다';
-  try{await sendMail({to:parsed.data,...renderConfirmEmail({name,promise,confirmUrl:`${appOrigin()}/api/beta/confirm?r=${reader.id}&t=${token}`})});}catch{return 'error';}
+  const promise=selection.lang==='en'
+    ?(plan==='subscriber'?`new issues (${scheduleLabel(selection)}) and every edition you make yourself`:'every edition you make yourself')
+    :(plan==='subscriber'?`${scheduleLabel(selection)}에 새 호를, 직접 만든 호는 만들 때마다`:'직접 만든 뉴스레터를 만들 때마다');
+  try{await sendMail({to:parsed.data,...renderConfirmEmail({name,promise,lang:selection.lang,confirmUrl:`${appOrigin()}/api/beta/confirm?r=${reader.id}&t=${token}`})});}catch{return 'error';}
   return 'check';
 }
 export async function stopMail(){
@@ -51,7 +54,7 @@ export async function mailEdition(reader:Reader|null,name:string,selection:Newsl
   if(!articles.length)return false;
   const origin=appOrigin(),unsub=unsubscribeUrl(reader);
   const mail=renderIssueEmail({selection,articles,hotIds:hotFor(selection,ids).map(h=>h.id),origin,readerName:name,unsubscribeUrl:unsub,archiveUrl:`${origin}/my/inbox/${key}`,
-    dateLabel:new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date())});
+    dateLabel:new Intl.DateTimeFormat(intlLocale(selection.lang),{timeZone:selection.tz,year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date())});
   await sendMail({to:reader.email,...mail,headers:{'List-Unsubscribe':`<${unsub}>`,'List-Unsubscribe-Post':'List-Unsubscribe=One-Click'}});
   return true;
 }

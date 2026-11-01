@@ -8,12 +8,15 @@ import {currentReader} from '@/lib/beta-store';
 import {billingConfigured,billingTestMode,customerKeyFor,PRICE,subscriptionActive,subscriptionFor,tossClientKey} from '@/lib/billing';
 import {appOrigin} from '@/lib/env';
 import {operator} from '@/lib/operator';
+import {getLocale} from '@/lib/locale';
 
 export const metadata={title:'구독하기 · Personal Intelligence Loop'};
 export const dynamic='force-dynamic';
 const errors:Record<string,string>={canceled:'카드 등록을 취소했어요.','card-failed':'카드를 등록하지 못했어요. 다른 카드로 다시 시도해 주세요.','payment-failed':'카드는 확인됐지만 첫 결제가 승인되지 않았어요. 한도나 카드 상태를 확인해 주세요.','not-allowed':'메일 주소 확인을 마친 뒤 다시 시도해 주세요.',signin:'로그인이 풀렸어요. 메일로 로그인한 뒤 다시 시도해 주세요.'};
 export default async function Billing({searchParams}:{searchParams:Promise<{error?:string;change?:string}>}){
   if(!billingConfigured())redirect('/pricing');
+  // Toss Payments takes Korean cards only, so English readers are sent back to pricing until a US payment option exists.
+  if(await getLocale()==='en')redirect('/pricing?us=soon');
   const [beta,q]=await Promise.all([betaReader(),searchParams]);
   if(!beta)redirect('/login#beta');
   const reader=await currentReader().catch(()=>null);

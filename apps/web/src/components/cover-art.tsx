@@ -63,10 +63,10 @@ const motifs:Record<string,(r:R)=>ReactNode>={
   career:r=>{const steps=6;return <>{range(steps).map(i=><rect key={i} x={60+i*80} y={360-(i+1)*44} width="80" height={(i+1)*44} fill={i===steps-1?A:D} opacity={i===steps-1?1:.6+i*.06}/>)}
     <line x1="540" y1="96" x2="540" y2="30" stroke={I} strokeWidth="4"/><path d="M540 30 h44 l-10 12 10 12 h-44z" fill={I}/>{range(8).map(i=><circle key={i} cx={between(r,40,300)} cy={between(r,40,160)} r="3" fill={L}/>)}</>;},
 };
-export function CoverArt({industry,seed,label}:{industry:string;seed:string;label:string}){
+export function CoverArt({industry,seed,label,loc='ko'}:{industry:string;seed:string;label:string;loc?:'ko'|'en'}){
   const draw=motifs[industry]||motifs.business;const r=rng(seed);const id=`art${seed.replace(/[^a-zA-Z0-9]/g,'').slice(-16)}`;
   const tilt=between(r,-8,8);
-  return <figure className="nl-cover-art"><svg viewBox="0 0 600 420" role="img" aria-label={`이번 호 대표 이미지: ${label}`} preserveAspectRatio="xMidYMid slice">
+  return <figure className="nl-cover-art"><svg viewBox="0 0 600 420" role="img" aria-label={loc==='en'?`This issue's cover image: ${label}`:`이번 호 대표 이미지: ${label}`} preserveAspectRatio="xMidYMid slice">
     <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1" gradientTransform={`rotate(${tilt})`}><stop offset="0" stopColor="var(--art-bg1)"/><stop offset="1" stopColor="var(--art-bg2)"/></linearGradient></defs>
     <rect width="600" height="420" fill={`url(#${id})`}/>{draw(r)}</svg>
     <figcaption>{label}</figcaption></figure>;
