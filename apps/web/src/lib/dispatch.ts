@@ -5,6 +5,7 @@ import {appOrigin} from './env';
 import {kstNow} from './kst';
 import {sendMail} from './mailer';
 import {renderIssueEmail} from './issue-email';
+import {billingConfigured,subscriptionActive,type Subscription} from './billing';
 
 const MAX_ATTEMPTS=3;
 export function unsubscribeUrl(r:Pick<Reader,'id'|'unsubscribe_token'>){return `${appOrigin()}/api/beta/unsubscribe?r=${r.id}&t=${r.unsubscribe_token}`;}
@@ -14,7 +15,14 @@ export function unsubscribeUrl(r:Pick<Reader,'id'|'unsubscribe_token'>){return `
 export async function dispatchDue(now=new Date()){
   const {hour,weekday}=kstNow(now);
   const summary={due:0,sent:0,skipped:0,failed:0};
-  for(const reader of await dueReaders(hour)){
+  let readers=await dueReaders(hour);
+  // With paid billing on, only a paid subscription earns scheduled mail; plans switched on for free during the beta do not.
+  if(billingConfigured()&&readers.length){
+    const {data}=await admin().from('billing_subscriptions').select('*').in('reader_id',readers.map(r=>r.id));
+    const paid=new Set(((data||[]) as Subscription[]).filter(s=>subscriptionActive(s,now)).map(s=>s.reader_id));
+    readers=readers.filter(r=>paid.has(r.id));
+  }
+  for(const reader of readers){
     if(reader.cadence==='weekly'&&reader.send_weekday!==weekday)continue;
     summary.due++;
     try{

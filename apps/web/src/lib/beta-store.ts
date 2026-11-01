@@ -38,7 +38,18 @@ export async function currentReader():Promise<Reader|null>{
   if(!z.uuid().safeParse(id).success||!secret)return null;
   const {data,error}=await admin().from('beta_readers').select(readerColumns).eq('id',id).maybeSingle();
   if(error)throw new Error('베타 독자 정보를 불러오지 못했습니다.');
-  return data&&same(data.token_hash,hash(secret))?toReader(data):null;
+  if(!data)return null;
+  if(same(data.token_hash,hash(secret)))return toReader(data);
+  // A browser signed in later by mail link carries its own session secret.
+  const session=await admin().from('reader_sessions').select('id').eq('reader_id',id).eq('token_hash',hash(secret)).maybeSingle();
+  return session.data?toReader(data):null;
+}
+// Server actions and route handlers only: give this browser a session of its own for the reader.
+export async function signInAs(readerId:string){
+  const secret=newToken();
+  const {error}=await admin().from('reader_sessions').insert({reader_id:readerId,token_hash:hash(secret)});
+  if(error)throw new Error('로그인하지 못했습니다.');
+  (await cookies()).set(READER_COOKIE,`${readerId}.${secret}`,readerCookie);
 }
 export async function readerById(id:string):Promise<Reader|null>{
   const {data,error}=await admin().from('beta_readers').select(readerColumns).eq('id',id).maybeSingle();

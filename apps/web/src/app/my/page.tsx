@@ -38,5 +38,5 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
     {latest?<><div className="paper-tools"><p className="muted">가장 최근 호 · {new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(latest.at))}</p><ThemePicker current={selection.theme}/></div>
       <BetaBanner/><NewsletterPaper selection={selection} stories={editionStories(selection,latest.articleIds)} editorial issuedAt={new Date(latest.at).toISOString()}/></>
     :<div className="paper-tools"><p className="muted">만들기 전에 지면 디자인을 골라 두세요.</p><ThemePicker current={selection.theme}/></div>}
-    </main><footer className="site-footer"><span>loop.</span><span>선택한 관심사가 새로운 읽기로.</span></footer></div>;
+    </main><footer className="site-footer"><span>loop.</span><span>선택한 관심사가 새로운 읽기로. · <a href="/privacy">개인정보 처리방침</a></span></footer></div>;
 }

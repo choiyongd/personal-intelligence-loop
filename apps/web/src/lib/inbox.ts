@@ -2,7 +2,10 @@ import 'server-only';
 import {cookies} from 'next/headers';
 import {z} from 'zod';
 import {allArticles,editionSeed,pickEdition} from './articles';
+import {cache} from 'react';
 import {kstNow} from './kst';
+import {currentReader} from './beta-store';
+import {billingConfigured,subscriptionActive,subscriptionFor} from './billing';
 import {plans,type NewsletterSelection,type Plan} from './newsletter';
 
 // The beta inbox lives in one browser cookie, like the beta identity itself.
@@ -21,10 +24,23 @@ const storeSchema=z.object({v:z.literal(1),plan:z.enum(['free','subscriber']),si
 export type InboxStore=z.infer<typeof storeSchema>;
 const empty=():InboxStore=>({v:1,plan:'free',since:kstNow().date,trial:false,issues:[],read:[]});
 
-export async function readInbox():Promise<InboxStore>{
+async function cookieInbox():Promise<InboxStore>{
   const raw=(await cookies()).get(INBOX_COOKIE)?.value;
   if(!raw)return empty();
   try{const parsed=storeSchema.safeParse(JSON.parse(Buffer.from(raw,'base64url').toString('utf8')));return parsed.success?parsed.data:empty();}catch{return empty();}
+}
+// Once paid billing is on, the plan comes from the server (a paid subscription), never from the cookie.
+const serverPlan=cache(async()=>{
+  const reader=await currentReader().catch(()=>null);
+  const sub=reader?await subscriptionFor(reader.id).catch(()=>null):null;
+  return subscriptionActive(sub)?{plan:'subscriber' as const,startedAt:new Date(sub!.started_at)}:{plan:'free' as const,startedAt:null};
+});
+export async function readInbox():Promise<InboxStore>{
+  const store=await cookieInbox();
+  if(!billingConfigured())return store;
+  const {plan,startedAt}=await serverPlan();
+  if(plan==='free')return store.plan==='free'?store:{...store,plan};
+  return {...store,plan,since:kstNow(startedAt!).date,subAt:Math.floor(startedAt!.getTime()/1000)};
 }
 // Server actions only: render code cannot set cookies.
 export async function writeInbox(store:InboxStore){

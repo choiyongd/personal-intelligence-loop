@@ -7,6 +7,6 @@ export function MailChoice({mail}:{mail:MailState}){
   const ready=mail.confirmed;
   return <div className="mail-choice">
     <label className="mail-choice-toggle"><input type="checkbox" name="mail" defaultChecked={mail.enabled||!ready}/><span>메일로도 받기</span>{ready&&<small>{mail.email}</small>}</label>
-    {!ready&&<div className="mail-choice-address"><label htmlFor="make-email" className="sr-only">받을 메일 주소</label><input id="make-email" name="email" type="email" maxLength={254} placeholder="받을 메일 주소" autoComplete="email" defaultValue={mail.email}/><small>{mail.email?'확인 메일의 버튼을 누르면 이 호가 바로 도착해요.':'처음 한 번만 확인 메일의 버튼을 눌러 주세요. 누르면 이 호가 바로 도착해요.'}</small></div>}
+    {!ready&&<div className="mail-choice-address"><label htmlFor="make-email" className="sr-only">받을 메일 주소</label><input id="make-email" name="email" type="email" maxLength={254} placeholder="받을 메일 주소" autoComplete="email" defaultValue={mail.email}/><small>{mail.email?'확인 메일의 버튼을 누르면 이 호가 바로 도착해요.':'처음 한 번만 확인 메일의 버튼을 눌러 주세요. 누르면 이 호가 바로 도착해요.'}</small><p className="mail-privacy">메일 주소는 뉴스레터를 보내는 데에만 쓰고, 언제든 수신 거부·삭제할 수 있어요. <a href="/privacy">개인정보 처리방침</a></p></div>}
   </div>;
 }
