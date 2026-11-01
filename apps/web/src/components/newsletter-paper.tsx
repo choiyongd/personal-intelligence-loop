@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import {HOT_BASIS} from '@/lib/articles/hot';
-import {contentLabels,countryName,industryFor,levelLabel,regionLabel,topicLabels,type NewsletterSelection,type NewsletterStory} from '@/lib/newsletter';
+import {lensFor,fill,josa,shortTitle} from '@/lib/discussion';
+import {continentOf,contentLabels,countryName,industryFor,levelLabel,regionLabel,topicLabels,type NewsletterSelection,type NewsletterStory} from '@/lib/newsletter';
 
 function date(raw:string|Date,opts:Intl.DateTimeFormatOptions={month:'long',day:'numeric'}){return new Intl.DateTimeFormat('ko-KR',{...opts,timeZone:'Asia/Seoul'}).format(new Date(raw));}
 function usableUrl(raw?:string){try{const u=new URL(raw||'');return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:undefined;}catch{return undefined;}}
@@ -13,22 +14,52 @@ function Meta({story}:{story:NewsletterStory}){return <p className="nl-meta"><sp
 function Evidence({story}:{story:NewsletterStory}){
   return story.evidence.length>0?<details className="nl-evidence"><summary>근거 출처 {story.evidence.length}개 보기</summary><ul>{story.evidence.map((e,i)=><li key={`${e.source}-${i}`}><a href={usableUrl(e.url)} target="_blank" rel="noopener noreferrer">{e.source} · {e.title} ↗</a></li>)}</ul></details>:null;
 }
-const shortTitle=(t:string)=>{const head=t.split(/[:…]/)[0].trim();return head.length>24?head.slice(0,23)+'…':head;};
-// Questions after reading: fact checks drawn from the leading stories, then prompts that widen the view,
-// including ones that join two stories from different fields or the same region.
+// After reading: fact checks drawn from the leading stories; prompts that widen the view in three
+// directions (out to the world, across stories, back to the reader); and topics to talk over with others.
+type Prompt={q:string;from?:NewsletterStory};
+function unique<T>(list:T[],key:(x:T)=>string){const seen=new Set<string>();return list.filter(x=>{const k=key(x);if(seen.has(k))return false;seen.add(k);return true;});}
+function PromptList({items}:{items:Prompt[]}){return <ol>{items.map(({q,from})=><li key={q}>{q}{from&&<small>{shortTitle(from.title)}</small>}</li>)}</ol>;}
 function Questions({stories}:{stories:NewsletterStory[]}){
   const top=stories.filter(s=>s.questions?.length).slice(0,3);
   const checks=top.flatMap(s=>s.questions!.slice(0,2).map(q=>({q,from:s})));
-  const widen=top.flatMap(s=>(s.thoughts||[]).slice(0,s===top[0]?2:1).map(q=>({q,from:s as NewsletterStory|undefined})));
-  const [a,b]=[stories[0],stories.find((s,i)=>i>0&&s.industry!==stories[0]?.industry)];
-  if(a&&b)widen.push({q:`‘${shortTitle(a.title)}’(${industryFor(a.industry).label})의 변화가 ‘${shortTitle(b.title)}’(${industryFor(b.industry).label})에 영향을 준다면, 어떤 경로를 거칠까요? 원인과 결과를 한 줄씩 적어 보세요.`,from:undefined});
-  const shared=stories.slice(0,6).flatMap((x,i)=>stories.slice(i+1,6).map(y=>({x,y,c:x.countries.find(c=>y.countries.includes(c)&&c!=='KR')}))).find(p=>p.c);
-  if(shared)widen.push({q:`‘${shortTitle(shared.x.title)}’와 ‘${shortTitle(shared.y.title)}’는 모두 ${countryName(shared.c!)}의 이야기입니다. 두 변화가 동시에 일어날 때 그곳의 기업과 시민은 무엇부터 조정해야 할까요?`,from:undefined});
-  widen.push({q:'이번 호에서 내 일이나 생활에 가장 먼저 닿을 이야기는 무엇인가요? 앞으로 한 달 동안 어떤 숫자를 지켜보면 그 영향을 확인할 수 있을까요?',from:undefined});
+  // One story per field, so the lenses are not repeated.
+  const fieldLeads=unique(stories,s=>s.industry).slice(0,3);
+  const world:Prompt[]=fieldLeads.map(s=>({q:fill(lensFor(s.industry).world,shortTitle(s.title)),from:s}));
+  const lead=stories[0];
+  if(lead?.thoughts?.[0])world.push({q:lead.thoughts[0],from:lead});
+  const link:Prompt[]=[];
+  const q=(x:NewsletterStory)=>`‘${shortTitle(x.title)}’`;
+  const pairs=stories.slice(0,8).flatMap((x,i)=>stories.slice(i+1,8).map(y=>({x,y})));
+  const used=new Set<string>();const take=<T extends {x:NewsletterStory;y:NewsletterStory}>(p?:T)=>{if(p)used.add(p.x.id+p.y.id);return p;};
+  const fresh=(p:{x:NewsletterStory;y:NewsletterStory})=>!used.has(p.x.id+p.y.id);
+  const cross=take(pairs.find(p=>p.x.industry!==p.y.industry));
+  if(cross)link.push({q:`${industryFor(cross.x.industry).label} 분야의 ${josa(q(cross.x),'과와')} ${industryFor(cross.y.industry).label} 분야의 ${josa(q(cross.y),'은는')} 서로 멀어 보이는 이야기입니다. 한쪽의 변화가 다른 쪽에 영향을 준다면 어떤 경로를 거칠까요? 원인과 결과를 한 줄씩 적어 보세요.`});
+  const shared=take(pairs.filter(fresh).map(p=>({...p,c:p.x.countries.find(c=>p.y.countries.includes(c)&&c!=='KR')})).find(p=>p.c));
+  if(shared)link.push({q:`${josa(q(shared.x),'과와')} ${josa(q(shared.y),'은는')} 모두 ${countryName(shared.c!)}의 이야기입니다. 두 변화가 동시에 일어날 때 그곳의 기업과 시민은 무엇부터 조정해야 할까요?`});
+  const far=take(pairs.filter(fresh).map(p=>({...p,cx:p.x.countries.map(continentOf).find(Boolean),cy:p.y.countries.map(continentOf).find(Boolean)})).find(p=>p.cx&&p.cy&&p.cx!==p.cy));
+  if(far)link.push({q:`${josa(q(far.x),'은는')} ${countryName(far.cx!)}, ${josa(q(far.y),'은는')} ${countryName(far.cy!)}의 이야기입니다. 한쪽의 변화가 다른 대륙에 닿는다면 무역·돈·사람·정보 가운데 무엇을 타고 건너갈까요?`});
+  if(stories.length>=3)link.push({q:`이번 호의 이야기 세 개를 골라 하나의 흐름으로 묶는다면 어떤 제목을 붙이겠어요? 각 이야기가 그 흐름의 원인·결과·신호 가운데 무엇인지 표시해 보세요.`});
+  link.push({q:'이번 호에서 1년 뒤에도 뉴스가 될 이야기와 곧 잊힐 이야기를 하나씩 골라 보세요. 무엇이 그 차이를 만드나요?'});
+  const me:Prompt[]=fieldLeads.slice(0,2).map(s=>({q:lensFor(s.industry).personal,from:s}));
+  me.push({q:'이번 호에서 내 일이나 생활에 가장 먼저 닿을 이야기는 무엇인가요? 앞으로 한 달 동안 어떤 숫자를 지켜보면 그 영향을 확인할 수 있을까요?'});
+  me.push({q:'읽기 전과 비교해 생각이 바뀐 지점이 하나라도 있나요? 아직 확신이 서지 않아 더 알아보고 싶은 것은 무엇인가요?'});
+  const widen=world.length+link.length+me.length;
+  const talks=fieldLeads.map((s,i)=>{const l=lensFor(s.industry),[motion,pro,con]=l.motions[i%l.motions.length],t=shortTitle(s.title);
+    const own=(s.thoughts||[]).find(x=>!world.some(w=>w.q===x))||s.thoughts?.[0];
+    return {s,t,own,motion,pro,con,follow:[`정부·기업·시민 가운데 한 역할을 맡아 이 주장에 대해 한 문장씩 말해 보세요. 누구의 말이 가장 설득력 있었나요?`,`${josa(`‘${t}’`,'을를')} 읽고 찾은 숫자나 사실 하나를 근거로 쓴다면 어느 쪽 주장이 더 강해질까요?`,`의견이 갈렸다면, 서로 받아들일 수 있는 최소한의 합의는 무엇일까요?`]};});
   return <section className="nl-think" aria-label="생각해 볼 질문"><div className="nl-think-cols">
-    <div><h3>읽고 확인할 질문 <small>{checks.length}</small></h3><p className="nl-think-lead">본문에서 답을 찾을 수 있는 질문이에요.</p><ol>{checks.map(({q,from})=><li key={q}>{q}<small>{shortTitle(from.title)}</small></li>)}</ol></div>
-    <div><h3>생각 확장 질문 <small>{widen.length}</small></h3><p className="nl-think-lead">정답이 없는 질문이에요. 이야기들을 서로 이어 보세요.</p><ol>{widen.map(({q,from})=><li key={q}>{q}{from&&<small>{shortTitle(from.title)}</small>}</li>)}</ol></div>
-  </div></section>;
+    <div><h3>읽고 확인할 질문 <small>{checks.length}</small></h3><p className="nl-think-lead">본문에서 답을 찾을 수 있는 질문이에요.</p><PromptList items={checks}/></div>
+    <div><h3>생각 넓히기 <small>{widen}</small></h3><p className="nl-think-lead">정답이 없는 질문이에요. 세계로, 서로에게로, 나에게로 이어 보세요.</p>
+      <div className="nl-widen"><p className="nl-widen-label">세계로 넓히기</p><PromptList items={world}/></div>
+      <div className="nl-widen"><p className="nl-widen-label">이야기 잇기</p><PromptList items={link}/></div>
+      <div className="nl-widen"><p className="nl-widen-label">나에게 가져오기</p><PromptList items={me}/></div></div>
+  </div>
+  {talks.length>0&&<div className="nl-talk"><h3>함께 이야기해 볼 주제 <small>{talks.length}</small></h3><p className="nl-think-lead">친구, 동료, 가족과 나눠 보세요. 한 사람이 찬성을, 다른 사람이 반대를 맡아 보면 생각이 더 넓어집니다.</p>
+    <div className="nl-talk-grid">{talks.map(({s,t,own,motion,pro,con,follow},i)=><article key={s.id}><p className="nl-talk-kicker">주제 {i+1} · {industryFor(s.industry).label}</p><p className="nl-talk-from">{josa(`‘${t}’`,'을를')} 읽고</p>{own&&<p className="nl-talk-own">{own}</p>}<p className="nl-talk-wider">넓혀 보면 이런 쟁점</p><h4>“{motion}”</h4>
+      <div className="nl-talk-sides"><p><b>찬성</b>{pro}</p><p><b>반대</b>{con}</p></div>
+      <ol>{follow.map(q=><li key={q}>{q}</li>)}</ol>
+      <p className="nl-talk-opener">대화를 여는 한마디 · “‘{t}’ 소식 봤어? 너는 어떻게 생각해?”</p></article>)}</div></div>}
+  </section>;
 }
 // Issue number on the masthead: day of month for daily editions, ISO week for weekly ones.
 function issueNo(raw:string|Date,cadence:string){

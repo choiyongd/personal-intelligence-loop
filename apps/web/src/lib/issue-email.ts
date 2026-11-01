@@ -1,5 +1,6 @@
 import {contentLabels,countryName,industryFor,levelLabel,regionLabel,scheduleLabel,type NewsletterSelection} from './newsletter';
 import type {Article} from './articles';
+import {fill,josa,lensFor,shortTitle} from './discussion';
 
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const font="font-family:'Pretendard Variable',Pretendard,'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;";
@@ -10,6 +11,14 @@ const serif="font-family:'Pretendard Variable',Pretendard,'Apple SD Gothic Neo',
 export function renderIssueEmail({selection,articles,hotIds=[],origin,dateLabel,readerName,unsubscribeUrl,archiveUrl}:{selection:NewsletterSelection;articles:Article[];hotIds?:string[];origin:string;dateLabel:string;readerName:string;unsubscribeUrl:string;archiveUrl:string}){
   const link=(a:Article)=>`${origin}/article/${a.id}?level=${selection.level}`;
   const cat=(a:Article)=>`${contentLabels[a.type]} · ${industryFor(a.industry).label}${a.regions.filter(r=>r!=='GLOBAL').length?' · '+a.regions.filter(r=>r!=='GLOBAL').slice(0,3).map(countryName).join(', '):''}`;
+  // Widening prompts and talk topics, one per field, mirroring the end of the web edition.
+  const short=shortTitle;
+  const byField=articles.filter((a,i)=>articles.findIndex(b=>b.industry===a.industry)===i).slice(0,2);
+  const widen=[...byField.map(a=>fill(lensFor(a.industry).world,short(a.title))),byField[0]?lensFor(byField[0].industry).personal:''].filter(Boolean);
+  const talks=byField.map((a,i)=>{const m=lensFor(a.industry).motions[i%2];return {t:short(a.title),motion:m[0],pro:m[1],con:m[2]};});
+  const label=(t:string)=>`<div style="${font}font-size:12px;font-weight:700;letter-spacing:.06em;color:#ee6f3c;margin:16px 0 6px">${t}</div>`;
+  const widenHtml=widen.length?`${label('생각 넓히기')}<ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.7;color:#1c1b19">${widen.map(q=>`<li>${esc(q)}</li>`).join('')}</ul>`:'';
+  const talkHtml=talks.length?`${label('함께 이야기해 볼 주제')}${talks.map(t=>`<div style="border-left:3px solid #ee6f3c;padding:6px 0 6px 12px;margin:0 0 10px;font-size:14px;line-height:1.6;color:#1c1b19"><b>“${esc(t.motion)}”</b><br><span style="color:#6e6a63">${esc(josa(`‘${t.t}’`,'을를'))} 읽고 · 찬성: ${esc(t.pro)} / 반대: ${esc(t.con)}</span></div>`).join('')}`:'';
   const [lead,...rest]=articles;
   const hotBadge=(a:Article)=>hotIds.includes(a.id)?`<span style="display:inline-block;background:#e4572e;color:#ffffff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-right:6px">세계의 화제</span>`:'';
   const card=(a:Article)=>`<tr><td style="padding:0 0 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-top:3px solid #ee6f3c"><tr><td style="padding:18px 20px;${font}"><div style="font-size:12px;color:#6e6a63">${hotBadge(a)}${esc(cat(a))}</div><a href="${link(a)}" style="display:block;margin:6px 0 8px;font-size:17px;line-height:1.45;font-weight:700;color:#1c1b19;text-decoration:none">${esc(a.title)}</a><div style="font-size:14px;line-height:1.6;color:#6e6a63">${esc(a.dek)}</div></td></tr></table></td></tr>`;
@@ -27,10 +36,10 @@ export function renderIssueEmail({selection,articles,hotIds=[],origin,dateLabel,
 <div style="font-size:12px;color:#6e6a63;margin-top:10px">출처 ${lead.sources.length}개 · ${esc(lead.asOf)} 기준</div>
 <a href="${link(lead)}" style="display:inline-block;margin-top:16px;background:#ee6f3c;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:11px 18px;border-radius:4px">전문 읽기 →</a></td></tr>
 ${rest.length?`<tr><td style="padding:26px 28px 8px;${font}"><div style="${serif}font-size:20px;font-weight:700;color:#1c1b19;margin-bottom:14px">함께 읽을 이야기</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rest.map(card).join('')}</table></td></tr>`:''}
-<tr><td style="padding:10px 28px 26px;${font}"><table role="presentation" width="100%" style="background:#ffffff;border-radius:6px"><tr><td style="padding:18px 20px"><div style="${serif}font-size:18px;font-weight:700;color:#1c1b19;margin-bottom:8px">읽고 나서, 생각해 볼 질문</div><ol style="margin:0;padding-left:18px;font-size:14px;line-height:1.7;color:#1c1b19">${lead.questions.slice(0,3).map(q=>`<li>${esc(q)}</li>`).join('')}</ol></td></tr></table></td></tr>
+<tr><td style="padding:10px 28px 26px;${font}"><table role="presentation" width="100%" style="background:#ffffff;border-radius:6px"><tr><td style="padding:18px 20px"><div style="${serif}font-size:18px;font-weight:700;color:#1c1b19;margin-bottom:8px">읽고 나서, 생각해 볼 질문</div><ol style="margin:0;padding-left:18px;font-size:14px;line-height:1.7;color:#1c1b19">${lead.questions.slice(0,3).map(q=>`<li>${esc(q)}</li>`).join('')}</ol>${widenHtml}${talkHtml}</td></tr></table></td></tr>
 <tr><td bgcolor="#1c1b19" style="background:#1c1b19;padding:20px 28px;${font}font-size:12px;line-height:1.7;color:#cfc9be"><b style="font-size:20px;color:#ffffff">loop.</b><br>공개 통계·공식 문서·학술 자료를 바탕으로 다시 쓴 해설입니다. 기사마다 원문 출처가 붙어 있습니다.<br>${esc(scheduleLabel(selection))}에 보내드립니다. <a href="${archiveUrl}" style="color:#ffffff">앱 메일함에서 다시 보기</a> · <a href="${unsubscribeUrl}" style="color:#ffffff">수신 거부</a></td></tr>
 </table></td></tr></table></body></html>`;
-  const text=[`${selection.name} · ${dateLabel}`,'',...articles.map((a,i)=>`${i+1}. ${a.title}\n   ${a.dek}\n   ${link(a)}`),'','생각해 볼 질문',...lead.questions.slice(0,3).map(q=>`- ${q}`),'',`지난 호: ${archiveUrl}`,`수신 거부: ${unsubscribeUrl}`].join('\n');
+  const text=[`${selection.name} · ${dateLabel}`,'',...articles.map((a,i)=>`${i+1}. ${a.title}\n   ${a.dek}\n   ${link(a)}`),'','생각해 볼 질문',...lead.questions.slice(0,3).map(q=>`- ${q}`),'','생각 넓히기',...widen.map(q=>`- ${q}`),'','함께 이야기해 볼 주제',...talks.map(t=>`- “${t.motion}” (찬성: ${t.pro} / 반대: ${t.con})`),'',`지난 호: ${archiveUrl}`,`수신 거부: ${unsubscribeUrl}`].join('\n');
   return {subject:`[${selection.name}] ${lead.title}`.slice(0,140),html,text};
 }
 export function renderConfirmEmail({name,confirmUrl,promise}:{name:string;confirmUrl:string;promise:string}){

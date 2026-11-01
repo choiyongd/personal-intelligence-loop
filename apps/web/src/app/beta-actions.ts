@@ -23,19 +23,22 @@ export async function saveBetaSelection(raw:string,rawMail?:string):Promise<{err
   if(!parsed.success)return {error:parsed.error.issues[0].message};
   const mail=mailChoice.safeParse(mailValue);
   (await cookies()).set(DRAFT_COOKIE,selectionQuery(parsed.data),draftCookie);
-  const reader=await currentReader();
-  if(reader)await saveReaderSelection(reader.id,parsed.data);
+  const reader=await currentReader().catch(()=>null);
+  if(reader)await saveReaderSelection(reader.id,parsed.data).catch(()=>undefined);
   let mailed:string|undefined;
+  // A mail setup failure must not block saving the interests; the reader sees a notice and can retry from /my.
   if(mail.success&&mail.data){
-    if(mail.data.on)mailed=await requestMail(beta.name,parsed.data,(await readInbox()).plan,mail.data.email);
-    else if(reader?.delivery_enabled){await stopMail();mailed='stopped';}
+    try{
+      if(mail.data.on)mailed=await requestMail(beta.name,parsed.data,(await readInbox()).plan,mail.data.email);
+      else if(reader?.delivery_enabled){await stopMail();mailed='stopped';}
+    }catch{mailed='error';}
   }
   revalidatePath('/my');
   return {error:'',mail:mailed};
 }
 export async function subscribeEmail(form:FormData){
   const beta=await requireBeta();
-  const result=await requestMail(beta.name,await savedOrDefaultSelection(),(await readInbox()).plan,String(form.get('email')||''));
+  const result=await requestMail(beta.name,await savedOrDefaultSelection(),(await readInbox()).plan,String(form.get('email')||'')).catch(()=>'error' as const);
   redirect(`/my?mail=${result==='on'?'resumed':result}#delivery`);
 }
 export async function stopEmail(){
