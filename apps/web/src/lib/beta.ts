@@ -8,7 +8,8 @@ export async function betaReader(){
   const raw=(await cookies()).get(BETA_COOKIE)?.value;
   if(raw===undefined)return null;
   const name=decodeURIComponent(raw).trim().slice(0,20);
-  return {name:name||'베타 독자'};
+  // An empty name falls back to a neutral label in the visitor's language.
+  return {name:name||((await cookies()).get('pil_lang')?.value==='en'?'Reader':'베타 독자')};
 }
 export async function draftSelection():Promise<NewsletterSelection|null>{
   const draft=(await cookies()).get(DRAFT_COOKIE)?.value;

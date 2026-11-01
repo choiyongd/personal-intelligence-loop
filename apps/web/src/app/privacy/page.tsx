@@ -1,10 +1,12 @@
 import {PublicNav} from '@/components/public-nav';
-import {operator} from '@/lib/operator';
+import {operator,type Operator} from '@/lib/operator';
+import {getLocale} from '@/lib/locale';
 
-export const metadata={title:'개인정보 처리방침 · Personal Intelligence Loop'};
+export async function generateMetadata(){return {title:`${await getLocale()==='en'?'Privacy policy':'개인정보 처리방침'} · Personal Intelligence Loop`};}
 export const dynamic='force-dynamic';
-export default function Privacy(){
+export default async function Privacy(){
   const o=operator();
+  if(await getLocale()==='en')return <PrivacyEn o={o}/>;
   return <div className="site-page"><PublicNav/><main id="main" className="policy-page">
     <p className="eyebrow">PRIVACY</p><h1>개인정보 처리방침</h1>
     <p className="muted">{o.name}(이하 ‘loop.’)는 독자의 개인정보를 뉴스레터를 만들고 보내는 데에만 씁니다. 시행일 {o.effective}.</p>
@@ -37,4 +39,46 @@ export default function Privacy(){
     <h2>8. 바뀌는 경우</h2>
     <p>이 방침을 바꾸면 시행 7일 전에 이 화면에 알립니다.</p>
   </main><footer className="site-footer"><span>loop.</span><span>읽는 만큼, 연결됩니다.</span></footer></div>;
+}
+
+// English policy for US readers, including the disclosures California law (CCPA/CPRA) asks for.
+function PrivacyEn({o}:{o:Operator}){
+  const mail=o.contact.includes('@')?`mailto:${o.contact}`:undefined;
+  return <div className="site-page"><PublicNav/><main id="main" className="policy-page" lang="en">
+    <p className="eyebrow">PRIVACY</p><h1>Privacy policy</h1>
+    <p className="muted">{o.nameEn} (“loop.”, “we”) uses readers’ personal information only to make and send your newsletter. Effective {o.effective}.</p>
+    {!o.complete&&<p className="delivery-notice" role="status">The operator name and contact are not set yet. They must be filled in before taking real readers.</p>}
+    <h2>1. What we collect and why</h2>
+    <table className="policy-table"><thead><tr><th scope="col">Information</th><th scope="col">Purpose</th><th scope="col">How long we keep it</th></tr></thead><tbody>
+      <tr><td>Email address</td><td>Confirmation email, newsletter delivery and unsubscribe handling</td><td>Until you press “Delete my email address” or ask us to delete it</td></tr>
+      <tr><td>Display name; chosen fields, topics and regions; reading level; delivery time and time zone; language</td><td>Building your personal newsletter</td><td>Until the beta ends or you ask us to delete it</td></tr>
+      <tr><td>Delivery records (date, stories sent, success or failure)</td><td>Preventing duplicate mail and fixing errors</td><td>Deleted together with your reader record</td></tr>
+      <tr><td>Feedback you send, and an optional reply address</td><td>Improving the service and replying to you</td><td>Until you ask us to delete it</td></tr>
+    </tbody></table>
+    <p>We do not ask for an account, phone number, government ID or payment details during the beta. We send mail only to an address that pressed the button in our confirmation email, and we never use it for ads or third-party marketing.</p>
+    <h2>2. What stays in your browser</h2>
+    <p>Whether you joined the beta, your chosen interests, your mailbox (editions you made and what you have read), your plan and your language are stored in cookies in this browser. Clearing your cookies removes them. We use no advertising or cross-site tracking cookies.</p>
+    <h2>3. Service providers</h2>
+    <table className="policy-table"><thead><tr><th scope="col">Provider</th><th scope="col">What they do for us</th><th scope="col">Information · Location</th></tr></thead><tbody>
+      <tr><td>Supabase Inc.</td><td>Stores reader records and delivery logs</td><td>Everything in section 1 · the region where our database runs</td></tr>
+      <tr><td>Resend (Plus Five Five, Inc.)</td><td>Sends email</td><td>Email address and message content · United States</td></tr>
+      <tr><td>Vercel Inc.</td><td>Hosts the website</td><td>Access logs such as IP address · United States and elsewhere</td></tr>
+    </tbody></table>
+    <p>Each provider processes information only to do the work above for us. The service is operated from the Republic of Korea, so your information may be processed in Korea and the United States.</p>
+    <h2>4. Your choices and rights</h2>
+    <ul><li>Every email has an <b>Unsubscribe</b> link; it stops delivery at once, and mail clients’ one-click unsubscribe works too.</li><li>In <b>My newsletter → Email delivery</b>, <b>Delete my email address</b> erases your stored address immediately.</li><li>You can ask us to tell you what we hold about you, to correct it, or to delete it by writing to the contact below. We answer within 45 days.</li></ul>
+    <h2>5. California residents (CCPA/CPRA)</h2>
+    <ul>
+      <li><b>Categories collected in the last 12 months:</b> identifiers (email address, display name), internet activity on our site (access logs, which stories you were sent), and inferences from your chosen interests and reading level. Sources: you, and your use of the site.</li>
+      <li><b>Business purposes:</b> providing the newsletter you asked for, security and debugging, and improving the service.</li>
+      <li><b>No sale or sharing:</b> we do not sell your personal information, and we do not share it for cross-context behavioral advertising. We do not knowingly collect information from anyone under 16. We do not use sensitive personal information.</li>
+      <li><b>Your rights:</b> to know and access, to delete, to correct, and to opt out of sale or sharing (which we do not do). You will not be treated differently for using these rights. You may use an authorized agent; we may ask to verify your request through the email address on file.</li>
+    </ul>
+    <h2>6. Security</h2>
+    <p>Reader records sit in tables that only a server-side key can reach; the browser key cannot read them. Confirmation and unsubscribe links use random values that cannot be guessed, and all traffic is encrypted with HTTPS.</p>
+    <h2>7. Contact</h2>
+    <p>{o.nameEn}{o.addressEn&&<> · {o.addressEn}</>}{o.contact&&<> · <a href={mail}>{o.contact}</a></>}</p>
+    <h2>8. Changes</h2>
+    <p>If we change this policy, we will post the change on this page at least 7 days before it takes effect, and email you if the change is material.</p>
+  </main><footer className="site-footer"><span>loop.</span><span>The more you read, the more it connects.</span></footer></div>;
 }

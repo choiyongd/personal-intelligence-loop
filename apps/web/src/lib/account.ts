@@ -15,7 +15,7 @@ const browserCookie={path:'/',maxAge:60*60*24*180,sameSite:'lax' as const,secure
 export const accountsReady=()=>deliveryConfigured()&&mailConfigured();
 
 export type LoginRequest='sent'|'bad-email'|'wait'|'unavailable';
-export async function requestLoginLink(raw:string):Promise<LoginRequest>{
+export async function requestLoginLink(raw:string,loc:'ko'|'en'='ko'):Promise<LoginRequest>{
   if(!accountsReady())return 'unavailable';
   const email=z.email().max(254).safeParse(raw.trim().toLowerCase());
   if(!email.success)return 'bad-email';
@@ -30,6 +30,12 @@ export async function requestLoginLink(raw:string):Promise<LoginRequest>{
   if(error)return 'sent';
   const url=`${appOrigin()}/api/account/login?r=${reader.id}&t=${token}`;
   const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+  if(loc==='en'){
+    await sendMail({to:email.data,subject:'[loop.] Your sign-in link',
+      text:`Hi ${reader.name}, open the link below within 30 minutes to sign in to loop. in this browser.\n${url}\nIf you did not ask for this, ignore this message.\n${operatorLine(undefined,'en')}`,
+      html:`<!doctype html><html lang="en"><body style="margin:0;background:#e9e5dd;font-family:Arial,sans-serif"><table role="presentation" width="100%"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" style="max-width:520px;background:#fff;border-radius:6px"><tr><td style="background:#1c1b19;padding:22px 26px;font-size:26px;color:#fff">loop.</td></tr><tr><td style="padding:26px;font-size:15px;line-height:1.7;color:#1c1b19">Hi ${esc(reader.name)}, press the button below within 30 minutes to sign in in this browser.<br><br><a href="${url}" style="display:inline-block;background:#ee6f3c;color:#fff;font-weight:700;text-decoration:none;padding:12px 20px;border-radius:4px">Sign in</a><br><br><span style="font-size:12px;color:#6e6a63">If you did not ask for this, ignore this message. The link works only once.<br>${esc(operatorLine(undefined,'en'))}</span></td></tr></table></td></tr></table></body></html>`}).catch(()=>{});
+    return 'sent';
+  }
   await sendMail({to:email.data,subject:'[loop.] 로그인 링크',
     text:`${reader.name}님, 아래 링크를 30분 안에 열면 이 브라우저에서 loop.에 로그인됩니다.\n${url}\n직접 요청하지 않았다면 무시하세요.\n${operatorLine()}`,
     html:`<!doctype html><html lang="ko"><body style="margin:0;background:#e9e5dd;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif"><table role="presentation" width="100%"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" style="max-width:520px;background:#fff;border-radius:6px"><tr><td style="background:#1c1b19;padding:22px 26px;font-size:26px;color:#fff">loop.</td></tr><tr><td style="padding:26px;font-size:15px;line-height:1.7;color:#1c1b19">${esc(reader.name)}님, 아래 버튼을 30분 안에 누르면 이 브라우저에서 로그인됩니다.<br><br><a href="${url}" style="display:inline-block;background:#ee6f3c;color:#fff;font-weight:700;text-decoration:none;padding:12px 20px;border-radius:4px">로그인하기</a><br><br><span style="font-size:12px;color:#6e6a63">직접 요청하지 않았다면 이 메일을 무시하세요. 링크는 한 번만 쓸 수 있습니다.<br>${esc(operatorLine())}</span></td></tr></table></td></tr></table></body></html>`}).catch(()=>{});

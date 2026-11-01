@@ -9,7 +9,8 @@ import {mailEdition,mailReady,requestMail,stopMail} from '@/lib/edition-mail';
 import {generationsLeft,inboxIssues,newEdition,readInbox,setPlanIn,writeInbox} from '@/lib/inbox';
 import {billingConfigured,cancelSubscription,resumeSubscription} from '@/lib/billing';
 import {requestLoginLink} from '@/lib/account';
-import {accents,articleStyles,levels,newsletterSelectionSchema,selectionQuery,themes,type NewsletterSelection} from '@/lib/newsletter';
+import {accents,articleStyles,levels,localizeError,newsletterSelectionSchema,selectionQuery,themes,type NewsletterSelection} from '@/lib/newsletter';
+import {getLocale} from '@/lib/locale';
 
 const draftCookie={path:'/',maxAge:60*60*24*90,sameSite:'lax' as const,httpOnly:false,secure:process.env.VERCEL==='1'};
 async function requireBeta(){const beta=await betaReader();if(!beta)redirect('/login#beta');return beta;}
@@ -18,11 +19,12 @@ async function requireBeta(){const beta=await betaReader();if(!beta)redirect('/l
 // The same step can switch mail on (confirming a new address) or off, so readers never need a separate settings screen.
 const mailChoice=z.object({on:z.boolean(),email:z.string().max(254)}).optional();
 export async function saveBetaSelection(raw:string,rawMail?:string):Promise<{error:string;mail?:string}>{
-  const beta=await requireBeta();
+  const beta=await requireBeta(),loc=await getLocale();
   let value:unknown,mailValue:unknown;
-  try{value=JSON.parse(raw);mailValue=rawMail?JSON.parse(rawMail):undefined;}catch{return {error:'선택을 읽지 못했습니다. 다시 시도해 주세요.'};}
-  const parsed=newsletterSelectionSchema.safeParse(value);
-  if(!parsed.success)return {error:parsed.error.issues[0].message};
+  try{value=JSON.parse(raw);mailValue=rawMail?JSON.parse(rawMail):undefined;}catch{return {error:loc==='en'?'Could not read your choices. Please try again.':'선택을 읽지 못했습니다. 다시 시도해 주세요.'};}
+  // The edition and its mail follow the language the reader is using now.
+  const parsed=newsletterSelectionSchema.safeParse(value&&typeof value==='object'?{...value,lang:loc}:value);
+  if(!parsed.success)return {error:localizeError(parsed.error.issues[0].message,loc)};
   const mail=mailChoice.safeParse(mailValue);
   (await cookies()).set(DRAFT_COOKIE,selectionQuery(parsed.data),draftCookie);
   const reader=await currentReader().catch(()=>null);
@@ -68,7 +70,7 @@ export async function generateEdition(form?:FormData){
   const beta=await requireBeta();
   const selection=await savedOrDefaultSelection();
   const store=await readInbox();
-  if(generationsLeft(store)<=0)redirect(store.plan==='free'?'/pricing?from=limit':'/my?notice=limit');
+  if(generationsLeft(store,new Date(),selection.tz)<=0)redirect(store.plan==='free'?'/pricing?from=limit':'/my?notice=limit');
   const edition=newEdition(selection,store);
   if(!edition.ids.length)redirect('/my?notice=empty');
   await writeInbox({...store,trial:true,issues:[edition.stored,...store.issues]});
@@ -105,6 +107,8 @@ export async function markEditionRead(key:string){
 export async function choosePlan(form:FormData){
   const plan=form.get('plan')==='subscriber'?'subscriber':'free';
   // With paid billing on, subscribing goes through card registration and leaving is a cancellation.
+  // Card billing runs on Toss Payments, which takes Korean cards only; US readers wait for a US payment option.
+  if(billingConfigured()&&plan==='subscriber'&&await getLocale()==='en')redirect('/pricing?us=soon');
   if(billingConfigured())redirect(plan==='subscriber'?'/billing':'/my/billing');
   await requireBeta();
   await writeInbox(setPlanIn(await readInbox(),plan));
@@ -151,6 +155,6 @@ export async function resumePlan(){
 }
 // "Sign in by mail" on the login page; the answer is the same whether or not the address is known.
 export async function mailLogin(form:FormData){
-  const result=await requestLoginLink(String(form.get('email')||'')).catch(()=>'sent' as const);
+  const result=await requestLoginLink(String(form.get('email')||''),await getLocale()).catch(()=>'sent' as const);
   redirect(`/login?login=${result}#mail-login`);
 }

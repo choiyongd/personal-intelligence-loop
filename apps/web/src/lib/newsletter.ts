@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type {Locale} from './i18n';
 
 export const industries = [
   { id:'technology', label:'기술 · AI', description:'다음 변화를 만드는 기술', icon:'◈', terms:['AI','artificial intelligence','technology','model','software','인공지능','기술','모델'], topics:[['ai','인공지능','AI,artificial intelligence,model,인공지능,모델'],['semiconductor','반도체','semiconductor,chip,반도체'],['robotics','로보틱스','robot,robotics,로봇'],['software','소프트웨어','software,developer,소프트웨어,개발'],['cybersecurity','사이버 보안','security,cyber,해킹,보안'],['quantum','양자 기술','quantum,양자'],['cloud','클라우드 · 데이터센터','cloud,data center,클라우드,데이터센터']] },
@@ -40,6 +41,14 @@ export type IndustryId = typeof industries[number]['id'];
 const industryEnum=z.enum(industries.map(i=>i.id) as [IndustryId,...IndustryId[]]);
 export type RegionCode=typeof continents[number][0]|typeof countries[number][0];
 const countryEnum=z.enum([...continents.map(c=>c[0]),...countries.map(c=>c[0])] as [RegionCode,...RegionCode[]],{message:'국가를 선택하세요.'});
+// Time zones a reader can receive editions in: Korea plus the US zones.
+export const timeZones=[
+  ['Asia/Seoul','한국 시간','Korea'],['America/New_York','미국 동부','Eastern'],['America/Chicago','미국 중부','Central'],['America/Denver','미국 산악','Mountain'],
+  ['America/Phoenix','애리조나','Arizona'],['America/Los_Angeles','미국 서부','Pacific'],['America/Anchorage','알래스카','Alaska'],['Pacific/Honolulu','하와이','Hawaii'],
+] as const;
+const timeZoneIds=timeZones.map(t=>t[0]) as [typeof timeZones[number][0],...typeof timeZones[number][0][]];
+export type TimeZone=typeof timeZones[number][0];
+export function timeZoneLabel(tz:string,loc:Locale='ko'){const t=timeZones.find(x=>x[0]===tz);return t?(loc==='en'?`${t[2]} time`:t[1]):tz;}
 export const levels=[
   ['intro','입문','배경지식이 없어도 괜찮아요. 쉬운 요약과 용어 풀이를 먼저, 낱말을 가장 많이 짚어 드려요.'],
   ['practitioner','실무','기본 개념은 아는 분께. 사실과 숫자 중심으로, 꼭 필요한 용어만 풀어 드려요.'],
@@ -67,6 +76,9 @@ export const newsletterSelectionSchema = z.object({
   articleAccent: z.enum(['auto','violet','coral','emerald','rose','amber','graphite']).default('auto'),
   // Hover or tap a hard term to see its meaning, in articles and newsletters.
   terms: z.enum(['on','off']).default('on'),
+  // Language of the edition and its mail, and the time zone sendHour is read in.
+  lang: z.enum(['ko','en']).default('ko'),
+  tz: z.enum(timeZoneIds).default('Asia/Seoul'),
 }).superRefine((value,ctx)=>{
   const validTopics = industries.filter(i=>(value.industries as string[]).includes(i.id)).flatMap(i=>i.topics.map(t=>t[0] as string));
   if(value.subtopics.some(t=>!validTopics.includes(t))) ctx.addIssue({code:'custom',message:'선택한 분야에 맞는 세부 주제를 고르세요.',path:['subtopics']});
@@ -74,7 +86,16 @@ export const newsletterSelectionSchema = z.object({
   if(new Set(value.industries).size!==value.industries.length||new Set(value.countries).size!==value.countries.length) ctx.addIssue({code:'custom',message:'같은 항목이 두 번 선택되었습니다.',path:['industries']});
 });
 export type NewsletterSelection = z.infer<typeof newsletterSelectionSchema>;
-export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine',accent:'auto',articleStyle:'studio',articleAccent:'auto',terms:'on'};
+export const defaultSelection:NewsletterSelection = {industries:['technology'],subtopics:['ai'],scope:'global',countries:['US'],contentTypes:['article','research','news'],name:'나의 데일리 브리프',cadence:'daily',level:'practitioner',sendHour:7,sendWeekday:1,theme:'magazine',accent:'auto',articleStyle:'studio',articleAccent:'auto',terms:'on',lang:'ko',tz:'Asia/Seoul'};
+export const defaultNames={ko:'나의 데일리 브리프',en:'My Daily Brief'} as const;
+// Defaults for a visitor's language: an English visitor starts with an English name, US Eastern time and a topic that has English explainers.
+export function defaultsFor(loc:Locale):NewsletterSelection{return loc==='en'?{...defaultSelection,subtopics:['cloud'],name:defaultNames.en,lang:'en',tz:'America/New_York'}:defaultSelection;}
+// Bring a saved selection into the language being used, keeping every choice the reader made on purpose.
+export function inLocale(s:NewsletterSelection,loc:Locale):NewsletterSelection{
+  if(s.lang===loc)return s;
+  const d=defaultsFor(loc);
+  return {...s,lang:loc,name:s.name===defaultNames[s.lang]?d.name:s.name,tz:s.tz===defaultsFor(s.lang).tz?d.tz:s.tz,subtopics:s.subtopics.join()===defaultsFor(s.lang).subtopics.join()?d.subtopics:s.subtopics};
+}
 // Newsletter looks a reader can pick; the markup is shared and each theme is a stylesheet layer.
 export const themes=[
   ['magazine','매거진','종이 질감과 큰 제호, 주황 포인트'],
@@ -100,11 +121,58 @@ export type ArticleStyle=typeof articleStyles[number][0];
 export const plans={free:{label:'무료',stories:10,generations:1,per:'total'},subscriber:{label:'구독',stories:15,generations:3,per:'day',price:4900}} as const;
 export type Plan=keyof typeof plans;
 export const weekdays=['일','월','화','수','목','금','토'] as const;
-export function hourLabel(h:number){return `${h<12?'오전':'오후'} ${h%12===0?12:h%12}시`;}
-export function scheduleLabel(s:NewsletterSelection){return s.cadence==='daily'?`매일 ${hourLabel(s.sendHour)}`:`매주 ${weekdays[s.sendWeekday]}요일 ${hourLabel(s.sendHour)}`;}
+export const weekdaysEn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as const;
+const weekdayNamesEn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] as const;
+
+// English labels for the edition's vocabulary, keyed by the same ids as the Korean lists above.
+export const industryEn:Record<IndustryId,[string,string]>={
+  technology:['Tech · AI','The technology shaping what comes next'],business:['Business','New moves by companies and markets'],science:['Science · Research','Discoveries, experiments and the frontier of knowledge'],
+  energy:['Energy · Climate','A clear view of the sustainable transition'],health:['Healthcare','New possibilities in health and medicine'],finance:['Economy · Finance','Where money flows and the economy is heading'],
+  design:['Design · Culture','Ideas that change people and experiences'],policy:['Policy · Society','The context behind rules and social change'],mobility:['Mobility','Where the way we move is changing'],
+  food:['Food · Agriculture','A map of what we eat and grow'],education:['Education','How we learn, and where it leads'],entertainment:['Entertainment · Games','The business of having fun'],
+  sports:['Sports','The money and stories in and around the game'],lifestyle:['Travel · Lifestyle','How everyday life and taste are shifting'],environment:['Environment · Ecology','The numbers that read the planet'],career:['Work · Career','How we work and the skills it takes'],
+};
+export const topicEn:Record<string,string>={
+  ai:'Artificial intelligence',semiconductor:'Semiconductors',robotics:'Robotics',software:'Software',cybersecurity:'Cybersecurity',quantum:'Quantum tech',cloud:'Cloud · Data centers',
+  startup:'Startups',strategy:'Corporate strategy',commerce:'Commerce',['supply-chain']:'Supply chains · Trade',labor:'Jobs · Labor',esg:'ESG · Governance',
+  space:'Space',materials:'Advanced materials',biology:'Life sciences',physics:'Physics',earth:'Earth science',neuroscience:'Neuroscience',
+  battery:'Batteries',renewables:'Renewables',climate:'Climate policy',nuclear:'Nuclear power',['critical-minerals']:'Critical minerals',hydrogen:'Hydrogen',
+  ['digital-health']:'Digital health',biotech:'Biotech',medicine:'Clinical · Drugs',['public-health']:'Public health',aging:'Aging · Care',['mental-health']:'Mental health',
+  economy:'Macroeconomy',fintech:'Fintech',investment:'Investing',crypto:'Digital assets',realestate:'Real estate · Housing',currency:'Currencies',
+  ['product-design']:'Product design',creative:'Creative work',culture:'Culture trends',architecture:'Architecture · Cities',media:'Media · Content',ux:'UX · Service design',
+  regulation:'Regulation · Law',society:'Social change',international:'International relations',security:'Security · Defense',migration:'Migration · Population',democracy:'Elections · Democracy',
+  ev:'Electric vehicles',aviation:'Aviation · Aerospace',autonomous:'Autonomous driving',shipping:'Shipping · Logistics',
+  agriculture:'Agriculture · Food security',foodtech:'Food tech',['food-prices']:'Food prices',
+  edtech:'Edtech · AI in education',['higher-ed']:'Higher ed · Study abroad',k12:'K-12 · Admissions',
+  games:'Games',music:'Music · Live',film:'Film · TV',['sports-business']:'Sports business',['mega-events']:'World Cup · Olympics',
+  travel:'Travel · Tourism',wellness:'Wellness · Sleep',fashion:'Fashion',biodiversity:'Biodiversity',ocean:'Oceans',pollution:'Plastics · Pollution',
+  skills:'Skills · Reskilling',['remote-work']:'Ways of working',
+};
+const continentEn:Record<string,string>={EUROPE:'Europe',N_AMERICA:'North America',S_AMERICA:'South America',EURASIA:'Eurasia',ASIA_PACIFIC:'Asia · Pacific',MIDEAST_AFRICA:'Middle East · Africa'};
+export const levelsEn:Record<Level,[string,string]>={
+  intro:['Beginner','No background needed. A plain summary and word help come first, with the most terms explained.'],
+  practitioner:['Working','For readers who know the basics. Facts and numbers first, with only the key terms explained.'],
+  expert:['Expert','At a specialist level. A deep-dive chapter adds methods, debates and limits.'],
+};
+export const contentLabelsEn={article:'Article',research:'Research',news:'News'} as const;
+export const themesEn:Record<Theme,[string,string]>={magazine:['Magazine','Paper texture, a big nameplate, orange accents'],minimal:['Minimal','White page and fine rules, nothing but the words'],bento:['Bento','Rounded card grid with soft color fields'],night:['Night','Dark page with vivid highlights']};
+export const accentsEn:Record<Accent,string>={auto:'Default',violet:'Violet',coral:'Coral',emerald:'Emerald',rose:'Rose',amber:'Amber',graphite:'Graphite'};
+export const articleStylesEn:Record<ArticleStyle,[string,string]>={studio:['Studio','Ink-dark header like the site, white page'],paper:['Paper','Warm paper tone with ink-black type'],night:['Night','A dark page that is easy on the eyes']};
+export const planLabel=(p:Plan,loc:Locale='ko')=>loc==='en'?(p==='free'?'Free':'Subscriber'):plans[p].label;
+
+export function industryName(id:string,loc:Locale='ko'){return loc==='en'?(industryEn[id as IndustryId]||industryEn.business)[0]:industryFor(id).label;}
+export function industryDescription(id:string,loc:Locale='ko'){return loc==='en'?(industryEn[id as IndustryId]||industryEn.business)[1]:industryFor(id).description;}
+export function topicName(id:string,loc:Locale='ko'){return loc==='en'?topicEn[id]||id:allTopics.find(t=>t[0]===id)?.[1]||id;}
+export function contentLabel(type:keyof typeof contentLabels,loc:Locale='ko'){return loc==='en'?contentLabelsEn[type]:contentLabels[type];}
+export function hourLabel(h:number,loc:Locale='ko'){return loc==='en'?`${h%12===0?12:h%12} ${h<12?'AM':'PM'}`:`${h<12?'오전':'오후'} ${h%12===0?12:h%12}시`;}
+export function scheduleLabel(s:NewsletterSelection,loc:Locale=s.lang){
+  if(loc==='en'){const zone=s.tz==='Asia/Seoul'?' Korea time':` ${timeZoneLabel(s.tz,'en').replace(' time','')}`;return s.cadence==='daily'?`Daily at ${hourLabel(s.sendHour,'en')}${zone}`:`${weekdayNamesEn[s.sendWeekday]}s at ${hourLabel(s.sendHour,'en')}${zone}`;}
+  const zone=s.tz==='Asia/Seoul'?'':` (${timeZoneLabel(s.tz)})`;
+  return s.cadence==='daily'?`매일 ${hourLabel(s.sendHour)}${zone}`:`매주 ${weekdays[s.sendWeekday]}요일 ${hourLabel(s.sendHour)}${zone}`;
+}
 export function industryFor(id:string){return industries.find(i=>i.id===id)||industries[0];}
-export function industryLabel(s:NewsletterSelection){return s.industries.map(id=>industryFor(id).label).join(' · ');}
-export function levelLabel(level:Level){return levels.find(l=>l[0]===level)?.[1]||'실무';}
+export function industryLabel(s:NewsletterSelection,loc:Locale='ko'){return s.industries.map(id=>industryName(id,loc)).join(' · ');}
+export function levelLabel(level:Level,loc:Locale='ko'){return loc==='en'?levelsEn[level]?.[0]||'Working':levels.find(l=>l[0]===level)?.[1]||'실무';}
 // A picked continent stands for its own code plus every listed country on it, so continent-wide and national stories both match.
 export function selectedCountries(s:NewsletterSelection):string[]{
   if(s.scope==='global')return [];
@@ -112,18 +180,35 @@ export function selectedCountries(s:NewsletterSelection):string[]{
   return [...new Set(s.countries.flatMap(c=>continents.some(k=>k[0]===c)?[c,...countries.filter(x=>x[2]===c).map(x=>x[0])]:[c]))];
 }
 export function continentOf(code:string){return countries.find(c=>c[0]===code)?.[2]||(code==='KR'?'ASIA_PACIFIC':continents.some(k=>k[0]===code)?code:undefined);}
-export function countryName(code:string){return code==='KR'?'대한민국':countries.find(c=>c[0]===code)?.[1]||continents.find(c=>c[0]===code)?.[1]||code;}
-export function regionLabel(s:NewsletterSelection){return s.scope==='global'?'전 세계':s.scope==='kr'?'대한민국':s.countries.map(countryName).join(' · ');}
-export function topicLabels(s:NewsletterSelection){return s.subtopics.map(id=>allTopics.find(t=>t[0]===id)?.[1]||id);}
-export function selectionQuery(s:NewsletterSelection){
-  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday),theme:s.theme,accent:s.accent,art:s.articleStyle,artaccent:s.articleAccent,terms:s.terms}).toString();
+let regionNamesEn:Intl.DisplayNames|undefined;
+export function countryName(code:string,loc:Locale='ko'){
+  if(loc==='en'){
+    if(continentEn[code])return continentEn[code];
+    if(code==='KR')return 'South Korea';
+    try{regionNamesEn??=new Intl.DisplayNames(['en'],{type:'region'});return regionNamesEn.of(code)||code;}catch{return code;}
+  }
+  return code==='KR'?'대한민국':countries.find(c=>c[0]===code)?.[1]||continents.find(c=>c[0]===code)?.[1]||code;
 }
-export function selectionFromQuery(p:Record<string,string|string[]|undefined>):NewsletterSelection{
+export function regionLabel(s:NewsletterSelection,loc:Locale='ko'){return s.scope==='global'?(loc==='en'?'Worldwide':'전 세계'):s.scope==='kr'?countryName('KR',loc):s.countries.map(c=>countryName(c,loc)).join(' · ');}
+export function topicLabels(s:NewsletterSelection,loc:Locale='ko'){return s.subtopics.map(id=>topicName(id,loc));}
+// Validation messages are written in Korean in the schema; English readers see these instead.
+const errorsEn:Record<string,string>={
+  '국가를 선택하세요.':'Choose a country.','관심 분야를 하나 이상 선택하세요.':'Choose at least one field.','세부 주제는 16개까지 고를 수 있어요.':'You can pick up to 16 topics.',
+  '대륙과 국가는 합쳐서 8개까지 고를 수 있어요.':'You can pick up to 8 continents and countries in total.','읽을거리 유형을 하나 이상 선택하세요.':'Choose at least one kind of reading.',
+  '뉴스레터 이름을 입력하세요.':'Give your newsletter a name.','이름은 60자 이내로 입력하세요.':'Keep the name under 60 characters.','선택한 분야에 맞는 세부 주제를 고르세요.':'Pick topics that belong to the fields you chose.',
+  '국가를 하나 이상 선택하세요.':'Choose at least one country.','같은 항목이 두 번 선택되었습니다.':'The same item was picked twice.',
+};
+export function localizeError(message:string,loc:Locale){return loc==='en'?errorsEn[message]||'Please check your choices.':message;}
+export function selectionQuery(s:NewsletterSelection){
+  return new URLSearchParams({industries:s.industries.join(','),topics:s.subtopics.join(','),scope:s.scope,countries:s.countries.join(','),types:s.contentTypes.join(','),name:s.name,cadence:s.cadence,level:s.level,hour:String(s.sendHour),weekday:String(s.sendWeekday),theme:s.theme,accent:s.accent,art:s.articleStyle,artaccent:s.articleAccent,terms:s.terms,lang:s.lang,tz:s.tz}).toString();
+}
+export function selectionFromQuery(p:Record<string,string|string[]|undefined>,loc?:Locale):NewsletterSelection{
+  const base=defaultsFor(loc||(p.lang==='en'?'en':'ko'));
   const get=(key:string,fallback:string)=>typeof p[key]==='string'?p[key] as string:fallback;
   const list=(key:string,legacy:string,fallback:string)=>get(key,get(legacy,fallback)).split(',').filter(Boolean);
   const fresh=p.industries===undefined&&p.industry===undefined;
-  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?'ai':'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name','나의 데일리 브리프'),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine'),accent:get('accent','auto'),articleStyle:get('art','studio'),articleAccent:get('artaccent','auto'),terms:get('terms','on')});
-  return parsed.success?parsed.data:defaultSelection;
+  const parsed=newsletterSelectionSchema.safeParse({industries:list('industries','industry','technology'),subtopics:get('topics',fresh?base.subtopics.join(','):'').split(',').filter(Boolean),scope:get('scope','global'),countries:list('countries','country','US'),contentTypes:get('types','article,research,news').split(',').filter(Boolean),name:get('name',base.name),cadence:get('cadence','daily'),level:get('level','practitioner'),sendHour:get('hour','7'),sendWeekday:get('weekday','1'),theme:get('theme','magazine'),accent:get('accent','auto'),articleStyle:get('art','studio'),articleAccent:get('artaccent','auto'),terms:get('terms','on'),lang:get('lang',base.lang),tz:get('tz',base.tz)});
+  return parsed.success?parsed.data:base;
 }
 
 export type NewsletterStory = {

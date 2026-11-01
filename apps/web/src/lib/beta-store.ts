@@ -4,8 +4,8 @@ import {cookies} from 'next/headers';
 import {createClient,type SupabaseClient} from '@supabase/supabase-js';
 import {z} from 'zod';
 import {newsletterSelectionSchema,plans,type NewsletterSelection} from './newsletter';
-import {articlesFor,editionSeed,hotPicks,HOT_PER_EDITION,pickEdition} from './articles';
-import {kstNow} from './kst';
+import {articlesFor,editionSeed,hotPicksFor,HOT_PER_EDITION,pickEdition} from './articles';
+import {zonedNow} from './kst';
 
 // The reader cookie is "<id>.<secret>"; only a SHA-256 of the secret is stored.
 export const READER_COOKIE='pil_reader';
@@ -67,11 +67,14 @@ export async function ensureReader(name:string,selection:NewsletterSelection){
   (await cookies()).set(READER_COOKIE,`${data.id}.${secret}`,readerCookie);
   return toReader(data);
 }
-export async function dueReaders(hour:number){
-  // Subscribers whose hour has already come today; a delayed or missed hourly run still catches them the same day.
-  const {data,error}=await admin().from('beta_readers').select(readerColumns).eq('delivery_enabled',true).eq('plan','subscriber').lte('send_hour',hour).order('send_hour').limit(500);
+export async function dueReaders(now=new Date()){
+  // Subscribers whose hour has already come today in their own time zone; a delayed or missed hourly run still catches them the same day.
+  const {data,error}=await admin().from('beta_readers').select(readerColumns).eq('delivery_enabled',true).eq('plan','subscriber').order('send_hour').limit(1000);
   if(error)throw new Error('발송 대상을 불러오지 못했습니다.');
-  return (data||[]).map(toReader);
+  return (data||[]).map(toReader).filter(r=>{
+    const local=zonedNow(now,r.selectionParsed.tz);
+    return local.hour>=r.send_hour&&(r.cadence==='daily'||local.weekday===r.send_weekday);
+  });
 }
 export async function saveReaderSelection(id:string,selection:NewsletterSelection){
   const {error}=await admin().from('beta_readers').update(scheduleColumns(selection)).eq('id',id);
@@ -88,7 +91,7 @@ export async function pickArticles(readerId:string,selection:NewsletterSelection
   const rotate=(ids:string[])=>ids.map((id,order)=>({id,order,age:lastUsed.has(id)?lastUsed.get(id)!:Infinity}))
     .sort((a,b)=>b.age-a.age||a.order-b.order).map(x=>x.id);
   // World editions lead with two hot picks, rotated by rank among the least recently sent.
-  const hot=selection.scope==='global'?rotate(hotPicks.map(h=>h.id)).slice(0,HOT_PER_EDITION):[];
+  const hot=selection.scope==='global'?rotate(hotPicksFor(selection.lang).map(h=>h.id)).slice(0,HOT_PER_EDITION):[];
   return [...hot,...rotate(candidates.filter(id=>!hot.includes(id)))].slice(0,count);
 }
 const issueRow=z.object({id:z.uuid(),kind:z.enum(['scheduled','manual']),issue_date:z.string(),title:z.string(),selection:z.unknown(),article_ids:z.array(z.string()),delivery:z.enum(['saved','pending','sent','failed']),attempts:z.number(),created_at:z.string(),sent_at:z.string().nullable()});
@@ -97,9 +100,9 @@ const issueColumns='id,kind,issue_date,title,selection,article_ids,delivery,atte
 function toIssue(row:unknown):Issue{const r=issueRow.parse(row);return {...r,selectionParsed:newsletterSelectionSchema.parse(r.selection)};}
 export const issueSize=(s:NewsletterSelection)=>s.cadence==='daily'?5:8;
 
-// Insert-or-get keyed by (reader, kind, Korean date), so repeated clicks or overlapping cron runs make one issue.
+// Insert-or-get keyed by (reader, kind, the reader's local date), so repeated clicks or overlapping cron runs make one issue.
 export async function createIssue(reader:Pick<Reader,'id'|'selectionParsed'>,kind:'scheduled'|'manual',delivery:'saved'|'pending',now=new Date()){
-  const date=kstNow(now).date,s=reader.selectionParsed;
+  const s=reader.selectionParsed,date=zonedNow(now,s.tz).date;
   const found=await admin().from('beta_issues').select(issueColumns).eq('reader_id',reader.id).eq('kind',kind).eq('issue_date',date).maybeSingle();
   if(found.data)return {issue:toIssue(found.data),created:false};
   // Scheduled editions use the same date-seeded pick as the in-app inbox, so the mail and the inbox copy match.

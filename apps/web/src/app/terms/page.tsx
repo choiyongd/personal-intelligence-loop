@@ -2,12 +2,15 @@ import {PublicNav} from '@/components/public-nav';
 import {BusinessInfo} from '@/components/business-info';
 import {operator} from '@/lib/operator';
 import {plans} from '@/lib/newsletter';
+import {getLocale} from '@/lib/locale';
+import type {Operator} from '@/lib/operator';
 
-export const metadata={title:'이용약관 · Personal Intelligence Loop'};
+export async function generateMetadata(){return {title:`${await getLocale()==='en'?'Terms of use':'이용약관'} · Personal Intelligence Loop`};}
 export const dynamic='force-dynamic';
 const won=(n:number)=>`${n.toLocaleString('ko-KR')}원`;
-export default function Terms(){
+export default async function Terms(){
   const o=operator(),price=won(plans.subscriber.price);
+  if(await getLocale()==='en')return <TermsEn o={o}/>;
   return <div className="site-page"><PublicNav/><main id="main" className="policy-page">
     <p className="eyebrow">TERMS</p><h1>이용약관</h1>
     <p className="muted">{o.name}(이하 ‘회사’)가 제공하는 loop. 뉴스레터 서비스(이하 ‘서비스’)의 이용 조건입니다. 시행일 {o.effective}.</p>
@@ -30,4 +33,24 @@ export default function Terms(){
     <p>문의와 환불 요청: {o.contact||'(연락처 설정 전)'}{o.phone&&<> · {o.phone}</>}. 분쟁이 생기면 서로 성실히 협의하며, 해결되지 않으면 민사소송법상 관할 법원에서 해결합니다.</p>
     <BusinessInfo/>
   </main><footer className="site-footer"><span>loop.</span><span>읽는 만큼, 연결됩니다.</span></footer></div>;
+}
+
+// English terms for US readers. Paid plans are not offered in the US yet, so these cover the free beta.
+function TermsEn({o}:{o:Operator}){
+  return <div className="site-page"><PublicNav/><main id="main" className="policy-page" lang="en">
+    <p className="eyebrow">TERMS</p><h1>Terms of use</h1>
+    <p className="muted">These terms cover the loop. newsletter service (“the service”) provided by {o.nameEn} (“we”). Effective {o.effective}.</p>
+    <h2>1. The service</h2>
+    <p>We send explainers written from public sources, matched to the interests you choose, on the site and by email. They are for information only and are not investment, legal or medical advice. Please check numbers and dates against the original sources listed with every story.</p>
+    <h2>2. Free beta</h2>
+    <p>For readers in the United States, the service is free during the beta. Paid subscriptions are not yet available to US readers. Before any paid plan is offered, we will post its price and terms here and ask for your explicit consent; nothing is charged automatically.</p>
+    <h2>3. Email</h2>
+    <p>We email you only after you confirm your address. Every email includes an unsubscribe link that works immediately, and you can delete your address at any time from My newsletter.</p>
+    <h2>4. Your use</h2>
+    <p>You are welcome to read and share stories and newsletters personally, but you may not copy or sell them in bulk without our permission. Copyright in the original sources belongs to their authors.</p>
+    <h2>5. Changes and ending the service</h2>
+    <p>We will give 30 days’ notice before changing or ending the service. The service is provided “as is” during the beta, to the extent the law allows.</p>
+    <h2>6. Contact</h2>
+    <p>{o.contact||'(contact not set yet)'}{o.addressEn&&<> · {o.addressEn}</>}</p>
+  </main><footer className="site-footer"><span>loop.</span><span>The more you read, the more it connects.</span></footer></div>;
 }

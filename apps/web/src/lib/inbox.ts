@@ -3,7 +3,7 @@ import {cookies} from 'next/headers';
 import {z} from 'zod';
 import {allArticles,editionSeed,pickEdition} from './articles';
 import {cache} from 'react';
-import {kstNow} from './kst';
+import {kstNow,zonedAt,zonedNow} from './kst';
 import {currentReader} from './beta-store';
 import {billingConfigured,subscriptionActive,subscriptionFor} from './billing';
 import {plans,type NewsletterSelection,type Plan} from './newsletter';
@@ -54,29 +54,29 @@ const compact=(d:string)=>d.replaceAll('-','');
 export const scheduledKey=(date:string)=>`s-${compact(date)}`;
 function addDays(date:string,n:number){const t=new Date(`${date}T00:00:00Z`);t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10);}
 function weekdayOf(date:string){return new Date(`${date}T00:00:00Z`).getUTCDay();}
-// Korea time (UTC+9) for a date and hour, as epoch milliseconds.
-const kstAt=(date:string,hour:number)=>Date.parse(`${date}T${String(hour).padStart(2,'0')}:00:00+09:00`);
+// The reader's local date and hour (Korea time unless they chose another zone), as epoch milliseconds.
+const localAt=(s:NewsletterSelection,date:string)=>zonedAt(date,s.sendHour,s.tz);
 
 // Dates whose scheduled edition has already arrived, newest first. Only subscribers get scheduled editions.
 export function arrivedDates(s:NewsletterSelection,store:InboxStore,now=new Date()){
   if(store.plan!=='subscriber')return [];
-  const {date:today}=kstNow(now),out:string[]=[];
+  const {date:today}=zonedNow(now,s.tz),out:string[]=[];
   for(let i=0;i<=LOOKBACK_DAYS;i++){
     const d=addDays(today,-i);
     if(d<store.since)break;
     if(s.cadence==='weekly'&&weekdayOf(d)!==s.sendWeekday)continue;
-    if(kstAt(d,s.sendHour)<=now.getTime())out.push(d);
+    if(localAt(s,d)<=now.getTime())out.push(d);
   }
   return out;
 }
 // The next moment a scheduled edition arrives, so an open page can announce it without reloading.
 export function nextArrival(s:NewsletterSelection,store:InboxStore,now=new Date()){
   if(store.plan!=='subscriber')return null;
-  const {date:today}=kstNow(now);
+  const {date:today}=zonedNow(now,s.tz);
   for(let i=0;i<=7;i++){
     const d=addDays(today,i);
     if(s.cadence==='weekly'&&weekdayOf(d)!==s.sendWeekday)continue;
-    const at=kstAt(d,s.sendHour);
+    const at=localAt(s,d);
     if(at>now.getTime())return at;
   }
   return null;
@@ -90,22 +90,22 @@ export function inboxIssues(s:NewsletterSelection,store:InboxStore,now=new Date(
   const have=new Set(stored.map(i=>i.key));
   const virtual=arrivedDates(s,store,now).map(d=>scheduledKey(d)).filter(k=>!have.has(k)).map(k=>{
     const date=`${k.slice(2,6)}-${k.slice(6,8)}-${k.slice(8,10)}`;
-    return {key:k,kind:'scheduled' as const,date,at:kstAt(date,s.sendHour),articleIds:scheduledIds(s,date),read:read.has(k),stored:false};
+    return {key:k,kind:'scheduled' as const,date,at:localAt(s,date),articleIds:scheduledIds(s,date),read:read.has(k),stored:false};
   });
   return [...stored,...virtual].sort((a,b)=>b.at-a.at);
 }
 export function unreadCount(s:NewsletterSelection,store:InboxStore,now=new Date()){return inboxIssues(s,store,now).filter(i=>!i.read).length;}
 
-export function generationsUsed(store:InboxStore,now=new Date()){
-  const today=kstNow(now).date;
+export function generationsUsed(store:InboxStore,now=new Date(),tz='Asia/Seoul'){
+  const today=zonedNow(now,tz).date;
   // A subscription starts with a full day's allowance, even if a trial edition was made earlier that day.
   return store.plan==='free'?(store.trial?1:0):store.issues.filter(i=>i.t==='m'&&i.d===today&&i.at>=(store.subAt||0)).length;
 }
-export function generationsLeft(store:InboxStore,now=new Date()){return Math.max(0,plans[store.plan].generations-generationsUsed(store,now));}
+export function generationsLeft(store:InboxStore,now=new Date(),tz='Asia/Seoul'){return Math.max(0,plans[store.plan].generations-generationsUsed(store,now,tz));}
 
 // A fresh edition: subscribers get a different turn of their reading list for each of today's three slots.
 export function newEdition(s:NewsletterSelection,store:InboxStore,now=new Date()){
-  const today=kstNow(now).date,slot=store.issues.filter(i=>i.t==='m'&&i.d===today).length+1;
+  const today=zonedNow(now,s.tz).date,slot=store.issues.filter(i=>i.t==='m'&&i.d===today).length+1;
   const ids=pickEdition(s,plans[store.plan].stories,editionSeed(today,slot));
   const key=`m-${compact(today)}-${slot}`;
   return {key,ids,stored:{k:key,t:'m' as const,d:today,at:Math.floor(now.getTime()/1000),c:ids.map(code).join('')}};
