@@ -1110,3 +1110,56 @@ html.term-layer .term .term-tip { display: none; }
 #term-layer b { display: block; font-size: 12px; color: #b9b9ff; margin-bottom: 3px; }
 /* Minimal newsletters carry no cover image. */
 .nl.theme-minimal .nl-cover-art { display: none; }
+
+/* Word book: words whose meaning a reader opened, with spaced review (components/word-book.tsx). */
+.word-book-link .word-book-count { color: var(--accent); font-weight: 600; }
+.article-words { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border: 1px solid #44444c; border-radius: 999px; color: #d6d6e0; font-size: 13px; }
+.article-words:hover { border-color: var(--accent); text-decoration: none; }
+.glossary-book { margin: 14px 0 0; font-size: 13px; }
+.glossary-book .text-link { color: var(--ex-accent, inherit); min-height: 0; }
+.nl-words-book { margin: 14px 0 0; font-size: 13px; }
+.nl-words-book a { color: var(--mg-accent); font-weight: 600; }
+.word-book-view { max-width: 920px; margin: auto; padding: 42px 24px 90px; font-family: var(--sans); }
+.word-summary { border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 26px; background: #ffffff08; margin-bottom: 28px; }
+.word-summary dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 18px; }
+.word-summary dt { color: var(--muted); font-size: 12px; letter-spacing: .04em; }
+.word-summary dd { margin: 2px 0 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; }
+.word-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.word-actions .muted { margin: 0; }
+.word-sync { margin: 16px 0 0; font-size: 12px; }
+.word-empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 34px 28px; }
+.word-empty h2 { font-size: 22px; margin: 0 0 8px; }
+.word-empty p { color: var(--muted); max-width: 60ch; margin: 0 0 20px; }
+.word-tools { display: flex; gap: 12px; margin-bottom: 8px; }
+.word-search { flex: 1; } .word-sort { width: 180px; flex: none; }
+.word-list ul { list-style: none; margin: 0; padding: 0; }
+.word-row { display: flex; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.word-row-term { margin: 0; font-size: 18px; font-weight: 700; }
+.word-stage { margin-left: 10px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; vertical-align: 2px; background: #2a2a38; color: #c9c9ff; }
+.stage-new .word-stage { background: #3a2a22; color: #ffc4a8; }
+.stage-known .word-stage { background: #1d332b; color: #9ff0cc; }
+.word-row-meaning { margin: 4px 0 6px; color: #d6d6de; font-size: 15px; line-height: 1.6; }
+.word-row-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--muted); font-size: 12px; }
+.word-row-meta a { color: #c6c6f6; }
+.word-remove { flex: none; font-size: 12px; align-self: flex-start; }
+.word-review { max-width: 620px; margin: 0 auto; }
+.word-review-top { display: flex; justify-content: space-between; align-items: center; }
+.word-progress { height: 4px; background: #2a2a30; border-radius: 4px; overflow: hidden; margin: 6px 0 22px; }
+.word-progress span { display: block; height: 100%; background: var(--accent); transition: width .25s ease; }
+.word-card { border: 1px solid var(--line); border-radius: 18px; padding: 40px 32px 28px; background: #ffffff0a; text-align: center; outline: none; }
+.word-card-count { color: var(--muted); font-size: 12px; margin: 0 0 18px; }
+.word-card-term { font-size: clamp(28px, 6vw, 42px); font-weight: 800; letter-spacing: -.03em; margin: 0; line-height: 1.25; word-break: keep-all; }
+.word-card-from { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.word-card-meaning { font-size: 18px; line-height: 1.7; margin: 26px auto 0; max-width: 46ch; color: #e6e6ee; animation: word-in .2s ease; }
+.word-card .word-actions { justify-content: center; margin-top: 28px; }
+.word-keys { margin: 20px 0 0; font-size: 12px; }
+.word-done h2 { font-size: 26px; margin: 0 0 8px; }
+@keyframes word-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .word-card-meaning { animation: none; } .word-progress span { transition: none; } }
+@media (max-width: 640px) {
+  .word-book-view { padding: 28px 16px 70px; }
+  .word-summary { padding: 18px; } .word-summary dd { font-size: 26px; }
+  .word-tools { flex-direction: column; } .word-sort { width: 100%; }
+  .word-card { padding: 30px 18px 22px; }
+  .word-card .word-actions button { flex: 1; }
+}
