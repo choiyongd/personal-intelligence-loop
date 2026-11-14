@@ -3,6 +3,8 @@ import {redirect} from 'next/navigation';
 import {PublicNav} from '@/components/public-nav';
 import {NewsletterPaper} from '@/components/newsletter-paper';
 import {DeliveryPanel} from '@/components/delivery-panel';
+import {AppPanel} from '@/components/app-panel';
+import {vapidPublicKey} from '@/lib/push';
 import {ThemePicker} from '@/components/theme-picker';
 import {BetaBanner} from '@/components/beta-banner';
 import {betaReader,draftSelection} from '@/lib/beta';
@@ -40,6 +42,7 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
       <div className="make-actions">{left>0?<form action={generateEdition} className="make-form"><MailChoice mail={mailNow} loc={loc}/><button className="primary">{latest?L('새로 만들기','Make a new one'):L('뉴스레터 만들기','Make my newsletter')} →</button></form>:store.plan==='free'?<Link className="button primary" href="/pricing">{L('구독하고 계속 만들기 →','Subscribe to keep going →')}</Link>:<span className="muted">{L('내일 다시 만들 수 있어요','You can make more tomorrow')}</span>}<Link className="text-link" href="/my/inbox">{L('메일함 열기','Open mailbox')} ({issues.length}) →</Link></div>
     </section>
     <DeliveryPanel reader={reader} selection={selection} available={available} mailReady={mailConfigured()} plan={store.plan} notice={mail} loc={loc}/>
+    <AppPanel vapidKey={vapidPublicKey()} loc={loc}/>
     {latest?<><div className="paper-tools"><p className="muted">{L('가장 최근 호','Latest issue')} · {new Intl.DateTimeFormat(intlLocale(loc),{timeZone:selection.tz,month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(latest.at))}</p><ThemePicker current={selection.theme} loc={loc}/></div>
       <BetaBanner loc={loc}/><NewsletterPaper selection={selection} stories={editionStories(selection,latest.articleIds)} editorial issuedAt={new Date(latest.at).toISOString()}/></>
     :<div className="paper-tools"><p className="muted">{L('만들기 전에 지면 디자인을 골라 두세요.','Choose a page design before you make it.')}</p><ThemePicker current={selection.theme} loc={loc}/></div>}

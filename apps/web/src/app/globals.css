@@ -1110,3 +1110,10 @@ html.term-layer .term .term-tip { display: none; }
 #term-layer b { display: block; font-size: 12px; color: #b9b9ff; margin-bottom: 3px; }
 /* Minimal newsletters carry no cover image. */
 .nl.theme-minimal .nl-cover-art { display: none; }
+
+/* Home-screen app and push notifications (/my) */
+.app-panel .delivery-grid { grid-template-columns: 1.4fr 1fr; }
+.app-panel .text-button { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; color: #b9b9ff; text-decoration: underline; cursor: pointer; }
+.app-panel button[disabled] { opacity: .6; cursor: progress; }
+.app-panel .delivery-fine { margin-top: 12px; }
+@media (max-width: 760px) { .app-panel .delivery-grid { grid-template-columns: 1fr; } }

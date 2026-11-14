@@ -1,5 +1,5 @@
 # Every morning in Korea (05:07 KST) collect new official releases, let the editor pick the day's stories,
-# then write them a few at a time. Uses the same repository secrets as the newsletter dispatch:
+# then write them a few at a time, and finally send the day's push notices (skipped until VAPID keys are set). Uses the same repository secrets as the newsletter dispatch:
 # DISPATCH_URL (its /api/dispatch is swapped for /api/live) and CRON_SECRET.
 name: live-news
 on:
@@ -31,3 +31,4 @@ jobs:
             remaining=$(echo "$out" | jq -r '.remaining // 0')
             [ "$remaining" = "0" ] && break
           done
+          echo "== notify"; call notify || echo "(push notice failed; the stories are already published)"; echo
