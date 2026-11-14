@@ -1110,3 +1110,29 @@ html.term-layer .term .term-tip { display: none; }
 #term-layer b { display: block; font-size: 12px; color: #b9b9ff; margin-bottom: 3px; }
 /* Minimal newsletters carry no cover image. */
 .nl.theme-minimal .nl-cover-art { display: none; }
+
+/* Share buttons and friend invites */
+.share-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.share-label { font-size: 12px; color: #9f9fab; letter-spacing: .08em; margin-right: 4px; }
+.share-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 16px; border: 1px solid #44444c; border-radius: 999px; background: #17171b; color: #e9e9f0; font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
+.share-btn:hover { border-color: var(--accent); color: #fff; }
+.share-btn span { font-size: 14px; line-height: 1; }
+.share-btn.kakao { background: #fee500; border-color: #fee500; color: #191919; }
+.share-btn.kakao:hover { border-color: #fff; color: #000; }
+.share-url { flex: 1 1 100%; min-width: 0; font-size: 13px; }
+.share-status { flex: 1 1 100%; min-height: 1em; font-size: 12px; color: var(--accent); }
+.share-status:empty { display: none; }
+.article-share { display: flex; justify-content: space-between; align-items: center; gap: 22px; flex-wrap: wrap; margin: 26px 0 0; padding: 24px 26px; border: 1px solid #34343d; border-radius: 12px; background: #ffffff08; }
+.article-share h2 { margin: 0 0 6px; font-size: 20px; }
+.article-share .muted { margin: 0; font-size: 13px; }
+.invite-panel { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: center; margin: 0 0 26px; padding: 24px 26px; background: #17171b; border: 1px solid #303036; border-radius: 12px; }
+.invite-panel h2 { font-size: 20px; margin: 8px 0; }
+.invite-panel .muted { font-size: 13px; line-height: 1.7; margin: 0 0 14px; }
+.invite-stats { display: flex; gap: 28px; margin: 0; }
+.invite-stats dt { font-size: 12px; color: #9f9fab; }
+.invite-stats dd { margin: 4px 0 0; font-size: 26px; font-weight: 700; color: #fff; }
+.invite-link { margin: 0 0 12px; padding: 12px 14px; border: 1px dashed #44444c; border-radius: 8px; background: #0d0d0e; overflow-wrap: anywhere; }
+.invite-link code { font-size: 13px; color: #dcdce6; }
+.invite-actions form { margin: 0; }
+.invite-hero h1 { word-break: keep-all; }
+@media (max-width:850px) { .invite-panel { grid-template-columns: 1fr; } .article-share { padding: 20px; } }

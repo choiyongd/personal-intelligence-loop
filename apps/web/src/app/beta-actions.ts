@@ -4,7 +4,7 @@ import {cookies} from 'next/headers';
 import {redirect} from 'next/navigation';
 import {revalidatePath} from 'next/cache';
 import {BETA_COOKIE,DRAFT_COOKIE,betaReader,savedOrDefaultSelection} from '@/lib/beta';
-import {admin,currentReader,deliveryConfigured,saveReaderSelection} from '@/lib/beta-store';
+import {admin,currentReader,deliveryConfigured,ensureReader,saveReaderSelection} from '@/lib/beta-store';
 import {mailEdition,mailReady,requestMail,stopMail} from '@/lib/edition-mail';
 import {generationsLeft,inboxIssues,newEdition,readInbox,setPlanIn,writeInbox} from '@/lib/inbox';
 import {billingConfigured,cancelSubscription,resumeSubscription} from '@/lib/billing';
@@ -157,4 +157,11 @@ export async function resumePlan(){
 export async function mailLogin(form:FormData){
   const result=await requestLoginLink(String(form.get('email')||''),await getLocale()).catch(()=>'sent' as const);
   redirect(`/login?login=${result}#mail-login`);
+}
+
+// "Make my invite link": a reader record (without any email) is what holds the invite code.
+export async function createInviteLink(){
+  const beta=await requireBeta();
+  if(deliveryConfigured())await ensureReader(beta.name,await savedOrDefaultSelection()).catch(()=>undefined);
+  redirect('/my#invite');
 }

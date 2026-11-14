@@ -171,3 +171,24 @@ test('beta reader tables are server-only and one scheduled issue exists per read
     });
   }finally{await d.close();}
 });
+
+test('every beta reader gets a unique invite code and can record who invited them, never themselves',async()=>{
+  const d=await db();try{
+    const referrals=await readFile(new URL('supabase/migrations/202611140001_referrals.sql',root),'utf8');
+    const reader=async name=>(await d.query(`insert into public.beta_readers(token_hash,name,selection,unsubscribe_token) values (repeat('a',64),$1,'{}'::jsonb,repeat('u',32)) returning id`,[name])).rows[0].id;
+    const before=await reader('기존 독자');
+    await d.exec(referrals);await d.exec(referrals); // safe to run twice
+    const old=(await d.query('select referral_code from public.beta_readers where id=$1',[before])).rows[0].referral_code;
+    assert.match(old,/^[a-f0-9]{10}$/);
+    const friend=await reader('친구');
+    const code=(await d.query('select referral_code from public.beta_readers where id=$1',[friend])).rows[0].referral_code;
+    assert.notEqual(code,old);
+    await d.query('update public.beta_readers set referred_by=$1,referred_at=now() where id=$2',[before,friend]);
+    assert.equal((await d.query('select count(*)::int as n from public.beta_readers where referred_by=$1',[before])).rows[0].n,1);
+    await assert.rejects(d.query('update public.beta_readers set referred_by=id where id=$1',[before]),/not_self_referred/);
+    await assert.rejects(d.query('update public.beta_readers set referral_code=$1 where id=$2',[old,friend]),/duplicate|unique/);
+    await assert.rejects(d.query("update public.beta_readers set referral_code='NOT-OK' where id=$1",[friend]),/referral_code_format/);
+    await d.query('delete from public.beta_readers where id=$1',[before]);
+    assert.equal((await d.query('select referred_by from public.beta_readers where id=$1',[friend])).rows[0].referred_by,null);
+  }finally{await d.close();}
+});

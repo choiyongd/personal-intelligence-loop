@@ -16,10 +16,11 @@ export default async function Privacy(){
       <tr><td>메일 주소</td><td>수신 확인 메일과 뉴스레터 발송, 수신 거부 처리</td><td>메일 주소 삭제를 누르거나 삭제를 요청할 때까지</td></tr>
       <tr><td>표시 이름, 관심 분야·주제·지역, 읽는 수준, 받는 시간</td><td>나만의 뉴스레터 편집</td><td>베타 종료 또는 삭제 요청 시까지</td></tr>
       <tr><td>발송 기록(날짜, 보낸 기사 목록, 성공 여부)</td><td>중복 발송 방지와 오류 확인</td><td>독자 정보와 함께 삭제</td></tr>
+      <tr><td>초대 코드, 초대해 준 독자(친구 초대 링크로 들어온 경우)</td><td>친구 초대 링크 제공, 초대한 독자에게 함께한 친구 수 표시</td><td>독자 정보와 함께 삭제</td></tr>
     </tbody></table>
     <p>회원 가입을 받지 않으며, 이름·전화번호·주민등록번호·결제 정보는 받지 않습니다. 메일 주소는 뉴스레터를 보내 달라는 독자의 요청을 이행하기 위해 처리하고, 확인 메일의 버튼을 누른 주소로만 보냅니다. 광고나 제3자 마케팅에 쓰지 않습니다.</p>
     <h2>2. 브라우저에 저장하는 정보</h2>
-    <p>베타 이용 여부, 고른 관심사, 메일함(직접 만든 호와 읽음 표시), 플랜은 이 브라우저의 쿠키에 저장됩니다. 브라우저에서 쿠키를 지우면 함께 사라집니다.</p>
+    <p>베타 이용 여부, 고른 관심사, 메일함(직접 만든 호와 읽음 표시), 플랜은 이 브라우저의 쿠키에 저장됩니다. 친구의 초대 링크로 들어오면 누가 초대했는지를 가리키는 초대 코드가 30일 동안 쿠키에 남습니다. 브라우저에서 쿠키를 지우면 함께 사라집니다.</p>
     <h2>3. 처리 위탁과 국외 이전</h2>
     <table className="policy-table"><thead><tr><th scope="col">받는 곳</th><th scope="col">맡기는 일</th><th scope="col">이전되는 항목 · 국가</th></tr></thead><tbody>
       <tr><td>Supabase Inc.</td><td>독자 정보와 발송 기록 저장</td><td>1번의 모든 항목 · 데이터베이스가 있는 지역</td></tr>
@@ -53,11 +54,12 @@ function PrivacyEn({o}:{o:Operator}){
       <tr><td>Email address</td><td>Confirmation email, newsletter delivery and unsubscribe handling</td><td>Until you press “Delete my email address” or ask us to delete it</td></tr>
       <tr><td>Display name; chosen fields, topics and regions; reading level; delivery time and time zone; language</td><td>Building your personal newsletter</td><td>Until the beta ends or you ask us to delete it</td></tr>
       <tr><td>Delivery records (date, stories sent, success or failure)</td><td>Preventing duplicate mail and fixing errors</td><td>Deleted together with your reader record</td></tr>
+      <tr><td>Your invite code, and who invited you (if you came from a friend’s invite link)</td><td>Giving you an invite link and showing the inviter how many friends joined</td><td>Deleted together with your reader record</td></tr>
       <tr><td>Feedback you send, and an optional reply address</td><td>Improving the service and replying to you</td><td>Until you ask us to delete it</td></tr>
     </tbody></table>
     <p>We do not ask for an account, phone number, government ID or payment details during the beta. We send mail only to an address that pressed the button in our confirmation email, and we never use it for ads or third-party marketing.</p>
     <h2>2. What stays in your browser</h2>
-    <p>Whether you joined the beta, your chosen interests, your mailbox (editions you made and what you have read), your plan and your language are stored in cookies in this browser. Clearing your cookies removes them. We use no advertising or cross-site tracking cookies.</p>
+    <p>Whether you joined the beta, your chosen interests, your mailbox (editions you made and what you have read), your plan and your language are stored in cookies in this browser. Clearing your cookies removes them. If you arrive from a friend’s invite link, an invite code pointing to that friend stays in a cookie for 30 days. We use no advertising or cross-site tracking cookies.</p>
     <h2>3. Service providers</h2>
     <table className="policy-table"><thead><tr><th scope="col">Provider</th><th scope="col">What they do for us</th><th scope="col">Information · Location</th></tr></thead><tbody>
       <tr><td>Supabase Inc.</td><td>Stores reader records and delivery logs</td><td>Everything in section 1 · the region where our database runs</td></tr>

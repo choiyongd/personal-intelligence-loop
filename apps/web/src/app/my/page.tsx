@@ -15,6 +15,9 @@ import {ensureArticles,refreshLive} from '@/lib/live/registry';
 import {generationsLeft,inboxIssues,readInbox} from '@/lib/inbox';
 import {industryLabel,levelLabel,planLabel,plans,regionLabel,scheduleLabel,selectionQuery} from '@/lib/newsletter';
 import {getL} from '@/lib/locale';
+import {InvitePanel} from '@/components/invite-panel';
+import {referralFor} from '@/lib/referral';
+import {appOrigin} from '@/lib/env';
 import {intlLocale} from '@/lib/i18n';
 import {endBeta} from '../actions';
 import {generateEdition} from '../beta-actions';
@@ -28,6 +31,8 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
   if(!selection)redirect('/customize?beta=1');
   const [{mail,notice},{loc,L}]=await Promise.all([searchParams,getL()]),en=loc==='en';
   const available=deliveryConfigured(),reader=available?await currentReader():null;
+  const referral=reader?await referralFor(reader.id):null;
+  let origin='';try{origin=appOrigin();}catch{origin='';}
   const mailNow=await mailState(),store=await readInbox(),plan=plans[store.plan],left=generationsLeft(store,new Date(),selection.tz);
   await refreshLive();
   const issues=inboxIssues(selection,store),latest=issues[0];
@@ -40,6 +45,7 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
       <div className="make-actions">{left>0?<form action={generateEdition} className="make-form"><MailChoice mail={mailNow} loc={loc}/><button className="primary">{latest?L('새로 만들기','Make a new one'):L('뉴스레터 만들기','Make my newsletter')} →</button></form>:store.plan==='free'?<Link className="button primary" href="/pricing">{L('구독하고 계속 만들기 →','Subscribe to keep going →')}</Link>:<span className="muted">{L('내일 다시 만들 수 있어요','You can make more tomorrow')}</span>}<Link className="text-link" href="/my/inbox">{L('메일함 열기','Open mailbox')} ({issues.length}) →</Link></div>
     </section>
     <DeliveryPanel reader={reader} selection={selection} available={available} mailReady={mailConfigured()} plan={store.plan} notice={mail} loc={loc}/>
+    <InvitePanel referral={referral} canCreate={available&&!reader} origin={origin} loc={loc}/>
     {latest?<><div className="paper-tools"><p className="muted">{L('가장 최근 호','Latest issue')} · {new Intl.DateTimeFormat(intlLocale(loc),{timeZone:selection.tz,month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(latest.at))}</p><ThemePicker current={selection.theme} loc={loc}/></div>
       <BetaBanner loc={loc}/><NewsletterPaper selection={selection} stories={editionStories(selection,latest.articleIds)} editorial issuedAt={new Date(latest.at).toISOString()}/></>
     :<div className="paper-tools"><p className="muted">{L('만들기 전에 지면 디자인을 골라 두세요.','Choose a page design before you make it.')}</p><ThemePicker current={selection.theme} loc={loc}/></div>}
