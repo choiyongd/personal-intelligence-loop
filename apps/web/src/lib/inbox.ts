@@ -7,7 +7,8 @@ import {kstNow,zonedAt,zonedNow} from './kst';
 import {currentReader} from './beta-store';
 import {billingConfigured,subscriptionActive,subscriptionFor} from './billing';
 import {plans,type NewsletterSelection,type Plan} from './newsletter';
-import {liveArticles} from './articles';
+import {liveArticles,type Article} from './articles';
+import {articleCode,personalOrder,type ReadingProfile} from './recommend';
 
 // The beta inbox lives in one browser cookie, like the beta identity itself.
 // Scheduled editions are derived from the schedule and the date, so they cost no storage; the cookie keeps
@@ -17,7 +18,7 @@ const KEEP=15,LOOKBACK_DAYS=62;
 const inboxCookie={path:'/',maxAge:60*60*24*180,sameSite:'lax' as const,httpOnly:true,secure:process.env.VERCEL==='1'};
 
 // Article ids are long; the cookie keeps a 5-character code per article instead.
-function code(id:string){let h=2166136261;for(const c of id){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return (h>>>0).toString(36).padStart(7,'0').slice(-5);}
+const code=articleCode;
 const byCode=new Map(allArticles.map(a=>[code(a.id),a.id]));
 
 const storedIssue=z.object({k:z.string().max(20),t:z.enum(['m','s']),d:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),at:z.number(),c:z.string().max(120)});
@@ -105,9 +106,10 @@ export function generationsUsed(store:InboxStore,now=new Date(),tz='Asia/Seoul')
 export function generationsLeft(store:InboxStore,now=new Date(),tz='Asia/Seoul'){return Math.max(0,plans[store.plan].generations-generationsUsed(store,now,tz));}
 
 // A fresh edition: subscribers get a different turn of their reading list for each of today's three slots.
-export function newEdition(s:NewsletterSelection,store:InboxStore,now=new Date()){
+// With a reading profile, the edition leads with unread stories on topics the reader keeps opening.
+export function newEdition(s:NewsletterSelection,store:InboxStore,now=new Date(),profile?:ReadingProfile){
   const today=zonedNow(now,s.tz).date,slot=store.issues.filter(i=>i.t==='m'&&i.d===today).length+1;
-  const ids=pickEdition(s,plans[store.plan].stories,editionSeed(today,slot));
+  const ids=pickEdition(s,plans[store.plan].stories,editionSeed(today,slot),profile?(list:Article[])=>personalOrder(list,profile):undefined);
   const key=`m-${compact(today)}-${slot}`;
   return {key,ids,stored:{k:key,t:'m' as const,d:today,at:Math.floor(now.getTime()/1000),c:ids.map(code).join('')}};
 }

@@ -89,16 +89,18 @@ function staticFor(s:NewsletterSelection){
 function rotate<T>(list:T[],by:number){if(!list.length)return list;const k=((by%list.length)+list.length)%list.length;return [...list.slice(k),...list.slice(0,k)];}
 // One edition's article ids, decided only by the selection, its size and a seed (issue date and slot),
 // so the inbox, a re-read and the emailed copy of the same issue always agree without storing anything.
-export function pickEdition(s:NewsletterSelection,size:number,seed:number){
+// A reader's own edition may pass `order` (see lib/recommend personalOrder) to move topics they read forward and
+// stories they already read back. Scheduled issues never do, so they keep matching the mailed copy.
+export function pickEdition(s:NewsletterSelection,size:number,seed:number,order:(list:Article[])=>Article[]=x=>x){
   const hot=s.scope==='global'?rotate(hotPicksFor(s.lang).map(h=>h.id),seed*HOT_PER_EDITION).slice(0,HOT_PER_EDITION):[];
-  const fresh=liveFor(s,seedDate(seed)).slice(0,liveShare(size-hot.length)).map(a=>a.id);
+  const fresh=order(liveFor(s,seedDate(seed))).slice(0,liveShare(size-hot.length)).map(a=>a.id);
   const rest=staticFor(s).filter(a=>!hot.includes(a.id));
   const wanted=selectedCountries(s);
   // Region matches stay ahead of the rest; each group turns by the seed so every new edition opens differently.
   const near=wanted.length?rest.filter(a=>a.regions.some(r=>wanted.includes(r))):rest;
   const far=wanted.length?rest.filter(a=>!near.includes(a)):[];
   const step=Math.max(1,size-hot.length);
-  return [...hot,...fresh,...rotate(near,seed*step).map(a=>a.id),...rotate(far,seed*step).map(a=>a.id)].slice(0,size);
+  return [...hot,...fresh,...order([...rotate(near,seed*step),...rotate(far,seed*step)]).map(a=>a.id)].slice(0,size);
 }
 // Day number since 2026-01-01 in Korea time; editions on the same day differ by slot.
 export function editionSeed(date:string,slot=0){return Math.round((Date.parse(`${date}T00:00:00Z`)-Date.UTC(2026,0,1))/864e5)*4+slot;}
