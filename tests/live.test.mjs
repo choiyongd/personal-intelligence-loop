@@ -87,3 +87,30 @@ test('without live stories an edition is unchanged',()=>{
   const a=articles.pickEdition(s,15,articles.editionSeed('2026-11-01',1));
   assert.ok(a.length>=10);assert.ok(a.every(id=>!id.startsWith('n-')));
 });
+
+const {callUsage,addUsage}=load(`${lib}/live/cost.ts`);
+const {isNotice,capPerFeed,thinMaterial}=load(`${lib}/live/quality.ts`);
+
+test('call cost follows the model price, counting cache reads and writes',()=>{
+  const u=callUsage('claude-opus-5-5',{input_tokens:10_000,output_tokens:4_000,cache_read_input_tokens:1_000,cache_creation_input_tokens:0});
+  // (10,000 + 1,000 x 0.1) x $4/M + 4,000 x $20/M
+  assert.equal(u.usd,0.1204);
+  assert.equal(callUsage('claude-sonnet-5-5',{input_tokens:1_000_000,output_tokens:0}).usd,2);
+  assert.equal(callUsage('unknown-model',{input_tokens:5,output_tokens:5}).usd,null);
+  const sum=addUsage([u,callUsage('claude-sonnet-5-5',{input_tokens:1_000_000,output_tokens:0})]);
+  assert.equal(sum.calls,2);assert.equal(sum.usd,2.1204);
+});
+
+test('notices, schedules and housekeeping never reach the editor',()=>{
+  for(const t of ['Media Advisory: Secretary to Host Roundtable','Chair Powell to speak at conference','FDA Webinar on new guidance','2026년 11월 셋째 주 장관 주요 일정','공무원 채용 공고','인사 발령'])assert.ok(isNotice(t),t);
+  for(const t of ['Federal Reserve issues FOMC statement','FDA approves first gene therapy for sickle cell','소비자물가 2.1% 상승'])assert.ok(!isNotice(t),t);
+});
+
+test('one feed cannot fill the list, and headline-only stories are dropped',()=>{
+  const items=[...Array(40)].map((_,i)=>({feed_id:i<35?'arxiv-ai':'fed',i}));
+  const kept=capPerFeed(items,25);
+  assert.equal(kept.filter(i=>i.feed_id==='arxiv-ai').length,25);
+  assert.equal(kept.filter(i=>i.feed_id==='fed').length,5);
+  assert.ok(thinMaterial([{title:'t',material:'(설명 없음, 제목만 있음)'}]));
+  assert.ok(!thinMaterial([{title:'t',material:'가'.repeat(500)}]));
+});
