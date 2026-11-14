@@ -16,6 +16,7 @@ export default async function Privacy(){
       <tr><td>메일 주소</td><td>수신 확인 메일과 뉴스레터 발송, 수신 거부 처리</td><td>메일 주소 삭제를 누르거나 삭제를 요청할 때까지</td></tr>
       <tr><td>표시 이름, 관심 분야·주제·지역, 읽는 수준, 받는 시간</td><td>나만의 뉴스레터 편집</td><td>베타 종료 또는 삭제 요청 시까지</td></tr>
       <tr><td>발송 기록(날짜, 보낸 기사 목록, 성공 여부)</td><td>중복 발송 방지와 오류 확인</td><td>독자 정보와 함께 삭제</td></tr>
+      <tr><td>기사 토론에 남긴 답(표시 이름과 함께 공개), 신고 기록</td><td>독자 토론 운영과 부적절한 글 관리</td><td>답을 지우거나 삭제를 요청할 때까지, 독자 정보를 지우면 함께 삭제</td></tr>
     </tbody></table>
     <p>회원 가입을 받지 않으며, 이름·전화번호·주민등록번호·결제 정보는 받지 않습니다. 메일 주소는 뉴스레터를 보내 달라는 독자의 요청을 이행하기 위해 처리하고, 확인 메일의 버튼을 누른 주소로만 보냅니다. 광고나 제3자 마케팅에 쓰지 않습니다.</p>
     <h2>2. 브라우저에 저장하는 정보</h2>
@@ -54,6 +55,7 @@ function PrivacyEn({o}:{o:Operator}){
       <tr><td>Display name; chosen fields, topics and regions; reading level; delivery time and time zone; language</td><td>Building your personal newsletter</td><td>Until the beta ends or you ask us to delete it</td></tr>
       <tr><td>Delivery records (date, stories sent, success or failure)</td><td>Preventing duplicate mail and fixing errors</td><td>Deleted together with your reader record</td></tr>
       <tr><td>Feedback you send, and an optional reply address</td><td>Improving the service and replying to you</td><td>Until you ask us to delete it</td></tr>
+      <tr><td>Answers you post in article discussions (shown publicly with your display name), and reports you make</td><td>Running reader discussions and handling inappropriate posts</td><td>Until you delete the answer or ask us to; deleted with your reader record</td></tr>
     </tbody></table>
     <p>We do not ask for an account, phone number, government ID or payment details during the beta. We send mail only to an address that pressed the button in our confirmation email, and we never use it for ads or third-party marketing.</p>
     <h2>2. What stays in your browser</h2>

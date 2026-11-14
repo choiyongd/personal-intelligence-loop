@@ -1110,3 +1110,44 @@ html.term-layer .term .term-tip { display: none; }
 #term-layer b { display: block; font-size: 12px; color: #b9b9ff; margin-bottom: 3px; }
 /* Minimal newsletters carry no cover image. */
 .nl.theme-minimal .nl-cover-art { display: none; }
+
+/* Reader discussion at the end of an article, and the my-answers / moderation page. */
+.answer-link { font-size: 12px; font-weight: 600; color: var(--nl-blue, var(--accent)); white-space: nowrap; margin-left: 4px; }
+.explainer a.answer-link { color: var(--nl-blue); }
+.reader-answers { padding: 40px 0 34px; border-bottom: 1px solid var(--nl-rule); }
+.reader-answers>.page-label { display: inline-block; }
+.reader-answers h2 { font-family: var(--serif); font-size: clamp(24px,2.6vw,32px); line-height: 1.3; color: var(--nl-deep); margin: 12px 0 8px; word-break: keep-all; }
+.reader-answers>.muted { color: var(--nl-sub); font-size: 15px; line-height: 1.7; max-width: 62ch; margin: 0 0 18px; }
+.reader-answers .delivery-notice { background: var(--nl-sky); border-color: var(--nl-rule); color: var(--nl-ink); }
+.reader-answers .delivery-notice a { text-decoration: underline; text-underline-offset: 3px; font-weight: 600; }
+.answer-form { display: grid; gap: 14px; background: var(--nl-mist); border: 1px solid var(--nl-rule); border-radius: 8px; padding: 20px; margin: 0 0 26px; }
+.answer-form select, .answer-form textarea { width: 100%; font: inherit; font-size: 15px; padding: 11px 13px; border-radius: 8px; border: 1px solid var(--nl-rule); background: var(--ex-paper, #fff); color: var(--nl-ink); }
+.answer-form .feedback-field>span { font-size: 13px; font-weight: 600; color: var(--nl-sub); }
+.answer-form .mail-privacy { color: var(--nl-sub); max-width: none; }
+.answer-form-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+.answer-form-foot .primary { background: var(--ex-accent, var(--accent)); border-color: var(--ex-accent, var(--accent)); color: var(--ex-on-accent, #10101b); }
+.answer-form-foot .text-link { color: var(--nl-sub); min-height: 0; font-size: 13px; }
+.answer-empty { color: var(--nl-sub, var(--muted)); font-size: 15px; padding: 18px 0; }
+.answer-groups { display: grid; gap: 26px; }
+.answer-group h3 { font-size: 16px; line-height: 1.6; color: var(--nl-deep); margin: 0 0 10px; padding-bottom: 10px; border-bottom: 2px solid var(--nl-deep); word-break: keep-all; }
+.answer-group h3 span { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--nl-sub); margin-bottom: 2px; }
+.answer-group ul, .answer-list { list-style: none; margin: 0; padding: 0; }
+.answer { padding: 14px 0; border-bottom: 1px solid var(--nl-rule, #ffffff1f); }
+.answer.is-mine { border-left: 3px solid var(--nl-blue, var(--accent)); padding-left: 14px; }
+.answer.is-hidden { opacity: .72; }
+.answer-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 6px; font-size: 13px; color: var(--nl-sub, var(--muted)); }
+.answer-meta b { color: var(--nl-ink, inherit); font-size: 14px; }
+.answer-tag { font-size: 11px; font-weight: 600; border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; }
+.answer-note { font-size: 12px; color: var(--nl-sub, var(--muted)); margin: 0 0 6px; }
+.answer-question { font-size: 13px; color: var(--muted); margin: 0 0 6px; }
+.answer-question a { text-decoration: underline; text-underline-offset: 3px; }
+.answer-body { font-size: 16px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; color: var(--ex-body, inherit); }
+.answer-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 13px; }
+.answer-actions form { margin: 0; }
+.link-button { background: none; border: 0; padding: 0; min-height: 0; font: inherit; font-size: 13px; color: var(--nl-sub, var(--muted)); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; box-shadow: none; }
+.link-button:hover { color: var(--nl-ink, inherit); transform: none; box-shadow: none; }
+.answer-report summary { cursor: pointer; color: var(--nl-sub, var(--muted)); text-decoration: underline; text-underline-offset: 3px; list-style: none; }
+.answer-report summary::-webkit-details-marker { display: none; }
+.answer-report form { display: grid; gap: 8px; margin-top: 8px; padding: 12px; border: 1px solid var(--nl-rule, #ffffff1f); border-radius: 8px; }
+.answer-report fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.answers-page h2 { margin-top: 32px; }
