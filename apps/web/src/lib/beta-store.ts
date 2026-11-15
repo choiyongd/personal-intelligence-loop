@@ -6,6 +6,7 @@ import {z} from 'zod';
 import {newsletterSelectionSchema,plans,type NewsletterSelection} from './newsletter';
 import {articlesFor,editionSeed,hotPicksFor,HOT_PER_EDITION,pickEdition} from './articles';
 import {zonedNow} from './kst';
+import {attributeReferral} from './referral';
 
 // The reader cookie is "<id>.<secret>"; only a SHA-256 of the secret is stored.
 export const READER_COOKIE='pil_reader';
@@ -65,6 +66,7 @@ export async function ensureReader(name:string,selection:NewsletterSelection){
   const {data,error}=await admin().from('beta_readers').insert({token_hash:hash(secret),name,unsubscribe_token:newToken(),...scheduleColumns(selection)}).select(readerColumns).single();
   if(error)throw new Error('베타 독자를 만들지 못했습니다.');
   (await cookies()).set(READER_COOKIE,`${data.id}.${secret}`,readerCookie);
+  await attributeReferral(data.id);
   return toReader(data);
 }
 export async function dueReaders(now=new Date()){

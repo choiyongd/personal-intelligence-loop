@@ -16,6 +16,9 @@ import {ensureArticles,refreshLive} from '@/lib/live/registry';
 import {generationsLeft,inboxIssues,planLimits,readInbox} from '@/lib/inbox';
 import {industryLabel,levelLabel,planLabel,plans,regionLabel,scheduleLabel,selectionQuery} from '@/lib/newsletter';
 import {getL} from '@/lib/locale';
+import {InvitePanel} from '@/components/invite-panel';
+import {referralFor} from '@/lib/referral';
+import {appOrigin} from '@/lib/env';
 import {intlLocale} from '@/lib/i18n';
 import {endBeta} from '../actions';
 import {generateEdition} from '../beta-actions';
@@ -32,6 +35,8 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
   if(!selection)redirect('/customize?beta=1');
   const [{mail,notice},{loc,L}]=await Promise.all([searchParams,getL()]),en=loc==='en';
   const available=deliveryConfigured(),reader=available?await currentReader():null;
+  const referral=reader?await referralFor(reader.id):null;
+  let origin='';try{origin=appOrigin();}catch{origin='';}
   const mailNow=await mailState(),store=await readInbox(),plan={...plans[store.plan],...planLimits(store),label:store.tier==='pro'?'프로':plans[store.plan].label},left=generationsLeft(store,new Date(),selection.tz);
   await refreshLive();
   const issues=inboxIssues(selection,store),latest=issues[0];
@@ -50,6 +55,7 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
     </section>
     <Recommendations items={recs} suggestions={suggestions} selection={selection} reads={profile.count} loc={loc}/>
     <DeliveryPanel reader={reader} selection={selection} available={available} mailReady={mailConfigured()} plan={store.plan} notice={mail} loc={loc}/>
+    <InvitePanel referral={referral} canCreate={available&&!reader} origin={origin} loc={loc}/>
     {latest?<><div className="paper-tools"><p className="muted">{L('가장 최근 호','Latest issue')} · {new Intl.DateTimeFormat(intlLocale(loc),{timeZone:selection.tz,month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(latest.at))}</p><ThemePicker current={selection.theme} loc={loc}/></div>
       <BetaBanner loc={loc}/><NewsletterPaper selection={selection} stories={editionStories(selection,latest.articleIds)} editorial issuedAt={new Date(latest.at).toISOString()}/></>
     :<div className="paper-tools"><p className="muted">{L('만들기 전에 지면 디자인을 골라 두세요.','Choose a page design before you make it.')}</p><ThemePicker current={selection.theme} loc={loc}/></div>}
