@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import {TermFit} from '@/components/term-fit';
+import {TrackRead} from '@/components/track-read';
 import {notFound} from 'next/navigation';
 import {PublicNav} from '@/components/public-nav';
 import {articleById,hasEnglish,localize,topicLabel} from '@/lib/articles';
@@ -43,6 +44,7 @@ export default async function ArticlePage({params,searchParams}:{params:Promise<
   const total=pages.length+1;
   const regions=a.regions.map(r=>r==='GLOBAL'?L('전 세계','Worldwide'):countryName(r,loc)).join(' · ');
   return <div className="site-page article-site"><PublicNav/><TermFit/><div className="reading-progress" aria-hidden="true"/><main id="main" className="article-view">
+    {beta&&<TrackRead id={a.id}/>}
     <nav className="article-back" aria-label={siteL('기사 이동','Article navigation')}><Link href={beta?'/my':'/newsletter'}>{siteLoc==='en'?`← Back to ${beta?'my newsletter':'the newsletter'}`:`← ${beta?'나의 뉴스레터':'뉴스레터'}로`}</Link><div className="level-switch" role="group" aria-label={siteL('읽는 수준','Reading level')}>{levels.map(([lv,label])=><Link key={lv} href={`/article/${a.id}?level=${lv}`} aria-current={lv===level?'true':undefined}>{siteLoc==='en'?levelsEn[lv][0]:label}</Link>)}</div></nav>
     {koreanOnly&&<p className="delivery-notice" role="status" lang="en">This explainer is available in Korean only for now. English editions use translated stories; more are on the way.</p>}
     <article className={`explainer art-${look.articleStyle} accent-${look.articleAccent}`} lang={loc}>

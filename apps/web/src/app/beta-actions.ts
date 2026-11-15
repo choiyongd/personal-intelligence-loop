@@ -11,6 +11,10 @@ import {billingConfigured,cancelSubscription,resumeSubscription} from '@/lib/bil
 import {requestLoginLink} from '@/lib/account';
 import {accents,articleStyles,levels,localizeError,newsletterSelectionSchema,selectionQuery,themes,type NewsletterSelection} from '@/lib/newsletter';
 import {getLocale} from '@/lib/locale';
+import {addRead,currentProfile,readReading,writeReading} from '@/lib/reading';
+import {articleById} from '@/lib/articles';
+import {ensureArticles} from '@/lib/live/registry';
+import {withTopic} from '@/lib/recommend';
 
 const draftCookie={path:'/',maxAge:60*60*24*90,sameSite:'lax' as const,httpOnly:false,secure:process.env.VERCEL==='1'};
 async function requireBeta(){const beta=await betaReader();if(!beta)redirect('/login#beta');return beta;}
@@ -71,7 +75,7 @@ export async function generateEdition(form?:FormData){
   const selection=await savedOrDefaultSelection();
   const store=await readInbox();
   if(generationsLeft(store,new Date(),selection.tz)<=0)redirect(store.plan==='free'?'/pricing?from=limit':'/my?notice=limit');
-  const edition=newEdition(selection,store);
+  const edition=newEdition(selection,store,new Date(),await currentProfile());
   if(!edition.ids.length)redirect('/my?notice=empty');
   await writeInbox({...store,trial:true,issues:[edition.stored,...store.issues]});
   // Without a form (older callers) the reader's saved mail setting decides.
@@ -157,4 +161,42 @@ export async function resumePlan(){
 export async function mailLogin(form:FormData){
   const result=await requestLoginLink(String(form.get('email')||''),await getLocale()).catch(()=>'sent' as const);
   redirect(`/login?login=${result}#mail-login`);
+}
+
+// Reading history for recommendations. Called from the article page after it opens; quietly does nothing for visitors.
+export async function recordRead(id:string){
+  if(!await betaReader()||typeof id!=='string'||id.length>120)return;
+  await ensureArticles([id]);
+  const a=articleById(id);
+  if(!a)return;
+  const store=await readReading();
+  if(store.on)await writeReading(addRead(store,a.id,a.topic));
+}
+export async function setReadingHistory(form:FormData){
+  await requireBeta();
+  const store=await readReading(),on=form.get('on')==='on';
+  // Turning it off also forgets what was kept, so nothing lingers unused.
+  await writeReading({...store,on,r:on?store.r:[]});
+  revalidatePath('/','layout');
+  redirect(`/my/settings?reading=${on?'on':'off'}#reading`);
+}
+export async function clearReadingHistory(){
+  await requireBeta();
+  await writeReading({...await readReading(),r:[]});
+  revalidatePath('/','layout');
+  redirect('/my/settings?reading=cleared#reading');
+}
+
+// "Add this topic" from the recommendations: one more topic (and its field) on the saved interests.
+export async function addInterestTopic(form:FormData){
+  await requireBeta();
+  const current=await savedOrDefaultSelection();
+  const next=withTopic(current,String(form.get('topic')||''));
+  const parsed=next?newsletterSelectionSchema.safeParse(next):null;
+  if(!parsed?.success)redirect('/my?notice=topic-full#for-you');
+  (await cookies()).set(DRAFT_COOKIE,selectionQuery(parsed.data),draftCookie);
+  const reader=deliveryConfigured()?await currentReader().catch(()=>null):null;
+  if(reader)await saveReaderSelection(reader.id,parsed.data).catch(()=>undefined);
+  revalidatePath('/','layout');
+  redirect('/my?notice=topic-added#for-you');
 }
