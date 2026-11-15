@@ -13,7 +13,7 @@ import {MailChoice} from '@/components/mail-choice';
 import {mailConfigured} from '@/lib/mailer';
 import {editionStories} from '@/lib/articles';
 import {ensureArticles,refreshLive} from '@/lib/live/registry';
-import {generationsLeft,inboxIssues,readInbox} from '@/lib/inbox';
+import {generationsLeft,inboxIssues,planLimits,readInbox} from '@/lib/inbox';
 import {industryLabel,levelLabel,planLabel,plans,regionLabel,scheduleLabel,selectionQuery} from '@/lib/newsletter';
 import {getL} from '@/lib/locale';
 import {intlLocale} from '@/lib/i18n';
@@ -32,7 +32,7 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
   if(!selection)redirect('/customize?beta=1');
   const [{mail,notice},{loc,L}]=await Promise.all([searchParams,getL()]),en=loc==='en';
   const available=deliveryConfigured(),reader=available?await currentReader():null;
-  const mailNow=await mailState(),store=await readInbox(),plan=plans[store.plan],left=generationsLeft(store,new Date(),selection.tz);
+  const mailNow=await mailState(),store=await readInbox(),plan={...plans[store.plan],...planLimits(store),label:store.tier==='pro'?'프로':plans[store.plan].label},left=generationsLeft(store,new Date(),selection.tz);
   await refreshLive();
   const issues=inboxIssues(selection,store),latest=issues[0];
   if(latest)await ensureArticles(latest.articleIds);
@@ -41,7 +41,7 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
   const onPage=new Set((latest?.articleIds||[]).map(articleCode));
   const recs=recommend(selection,{...profile,read:new Set([...profile.read,...onPage])},6);
   const suggestions=suggestedTopics(selection,profile);
-  const quota=store.plan==='free'?(left?L('무료 체험으로 뉴스레터를 1회 만들 수 있어요.','Your free trial lets you make one newsletter.'):L('무료 체험 1회를 사용했어요. 구독하면 하루 3번 새로 만들 수 있어요.','You have used your free trial. Subscribers can make three new editions a day.')):en?`Editions left today: ${left}/${plan.generations}.`:`오늘 새로 만들 수 있는 횟수 ${left}/${plan.generations}회`;
+  const quota=store.plan==='free'?(left?L('무료 체험으로 뉴스레터를 1회 만들 수 있어요.','Your free trial lets you make one newsletter.'):L('무료 체험 1회를 사용했어요. 구독하면 하루 여러 번 새로 만들 수 있어요.','You have used your free trial. Subscribers can make three new editions a day.')):en?`Editions left today: ${left}/${plan.generations}.`:`오늘 새로 만들 수 있는 횟수 ${left}/${plan.generations}회`;
   return <div className="site-page"><PublicNav active="my"/><main id="main" className="newsletter-view"><header className="newsletter-view-heading"><div><p className="eyebrow">{en?`${beta.name}’s edition · ${planLabel(store.plan,loc)} plan`:`${beta.name}님의 에디션 · ${plan.label} 플랜`}</p><h1>{selection.name}</h1><p>{industryLabel(selection,loc)} · {regionLabel(selection,loc)} · {en?`${levelLabel(selection.level,loc)} level`:`${levelLabel(selection.level)} 수준`} · {scheduleLabel(selection,loc)}</p></div><div className="heading-actions"><Link className="button secondary" href={`/customize?${selectionQuery(selection)}`}>{L('관심사 수정 ↗','Edit interests ↗')}</Link><WordBookLink loc={loc}/><form action={endBeta}><button className="quiet">{L('로그아웃','Sign out')}</button></form></div></header>
     {notice&&notices[notice]&&<p className="delivery-notice" role="status">{notices[notice][en?1:0]}</p>}
     <section className="make-edition" aria-label={L('뉴스레터 만들기','Make a newsletter')}>
