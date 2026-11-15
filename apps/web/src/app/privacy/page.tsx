@@ -19,7 +19,7 @@ export default async function Privacy(){
     </tbody></table>
     <p>회원 가입을 받지 않으며, 이름·전화번호·주민등록번호·결제 정보는 받지 않습니다. 메일 주소는 뉴스레터를 보내 달라는 독자의 요청을 이행하기 위해 처리하고, 확인 메일의 버튼을 누른 주소로만 보냅니다. 광고나 제3자 마케팅에 쓰지 않습니다.</p>
     <h2>2. 브라우저에 저장하는 정보</h2>
-    <p>베타 이용 여부, 고른 관심사, 메일함(직접 만든 호와 읽음 표시), 플랜은 이 브라우저의 쿠키에 저장됩니다. 브라우저에서 쿠키를 지우면 함께 사라집니다.</p>
+    <p>베타 이용 여부, 고른 관심사, 메일함(직접 만든 호와 읽음 표시), 읽은 기사 기록(추천용: 글 번호·주제·날짜, 최근 120편), 플랜은 이 브라우저의 쿠키에 저장됩니다. 읽은 기사 기록은 개인 설정에서 끄거나 지울 수 있습니다. 브라우저에서 쿠키를 지우면 함께 사라집니다.</p>
     <h2>3. 처리 위탁과 국외 이전</h2>
     <table className="policy-table"><thead><tr><th scope="col">받는 곳</th><th scope="col">맡기는 일</th><th scope="col">이전되는 항목 · 국가</th></tr></thead><tbody>
       <tr><td>Supabase Inc.</td><td>독자 정보와 발송 기록 저장</td><td>1번의 모든 항목 · 데이터베이스가 있는 지역</td></tr>
@@ -57,7 +57,7 @@ function PrivacyEn({o}:{o:Operator}){
     </tbody></table>
     <p>We do not ask for an account, phone number, government ID or payment details during the beta. We send mail only to an address that pressed the button in our confirmation email, and we never use it for ads or third-party marketing.</p>
     <h2>2. What stays in your browser</h2>
-    <p>Whether you joined the beta, your chosen interests, your mailbox (editions you made and what you have read), your plan and your language are stored in cookies in this browser. Clearing your cookies removes them. We use no advertising or cross-site tracking cookies.</p>
+    <p>Whether you joined the beta, your chosen interests, your mailbox (editions you made and what you have read), your reading history for recommendations (story number, topic and date, last 120 stories; you can turn it off or erase it in Settings), your plan and your language are stored in cookies in this browser. Clearing your cookies removes them. We use no advertising or cross-site tracking cookies.</p>
     <h2>3. Service providers</h2>
     <table className="policy-table"><thead><tr><th scope="col">Provider</th><th scope="col">What they do for us</th><th scope="col">Information · Location</th></tr></thead><tbody>
       <tr><td>Supabase Inc.</td><td>Stores reader records and delivery logs</td><td>Everything in section 1 · the region where our database runs</td></tr>
