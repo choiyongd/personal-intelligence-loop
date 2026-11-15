@@ -10,17 +10,17 @@ function loadSdk(){
   });
 }
 // Opens Toss's card registration window; Toss then redirects to our success or fail route.
-export function TossBillingButton({clientKey,customerKey,origin,email,name,label}:{clientKey:string;customerKey:string;origin:string;email:string;name:string;label:string}){
+export function TossBillingButton({clientKey,customerKey,origin,email,name,label,plan='basic',yearly=false}:{clientKey:string;customerKey:string;origin:string;email:string;name:string;label:string;plan?:string;yearly?:boolean}){
   const [agreed,setAgreed]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
   async function start(){
     setBusy(true);setError('');
     try{
       await loadSdk();
-      await window.TossPayments!(clientKey).payment({customerKey}).requestBillingAuth({method:'CARD',successUrl:`${origin}/api/billing/success`,failUrl:`${origin}/api/billing/fail`,customerEmail:email,customerName:name});
+      await window.TossPayments!(clientKey).payment({customerKey}).requestBillingAuth({method:'CARD',successUrl:`${origin}/api/billing/success?plan=${encodeURIComponent(plan)}`,failUrl:`${origin}/api/billing/fail?plan=${encodeURIComponent(plan)}`,customerEmail:email,customerName:name});
     }catch{setError('결제창을 열지 못했어요. 잠시 후 다시 시도해 주세요.');setBusy(false);}
   }
   return <div className="billing-start">
-    <label className="billing-agree"><input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}/><span><a href="/terms" target="_blank">이용약관과 환불 규정</a>을 확인했고, 매월 같은 날 자동으로 결제되는 데 동의합니다.</span></label>
+    <label className="billing-agree"><input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}/><span><a href="/terms" target="_blank">이용약관과 환불 규정</a>을 확인했고, {yearly?'매년 같은 날':'매월 같은 날'} 자동으로 결제되는 데 동의합니다.</span></label>
     <button className="primary" disabled={!agreed||busy} onClick={start}>{busy?'결제창을 여는 중…':label}</button>
     {error&&<p className="delivery-notice" role="alert">{error}</p>}
   </div>;

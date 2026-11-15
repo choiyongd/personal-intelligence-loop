@@ -9,6 +9,7 @@ import {billingConfigured,subscriptionActive,subscriptionFor} from './billing';
 import {plans,type NewsletterSelection,type Plan} from './newsletter';
 import {liveArticles,type Article} from './articles';
 import {articleCode,personalOrder,type ReadingProfile} from './recommend';
+import {paidPlan,tierLimits,type Tier} from './billing-plans';
 
 // The beta inbox lives in one browser cookie, like the beta identity itself.
 // Scheduled editions are derived from the schedule and the date, so they cost no storage; the cookie keeps
@@ -22,7 +23,7 @@ const code=articleCode;
 const byCode=new Map(allArticles.map(a=>[code(a.id),a.id]));
 
 const storedIssue=z.object({k:z.string().max(20),t:z.enum(['m','s']),d:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),at:z.number(),c:z.string().max(120)});
-const storeSchema=z.object({v:z.literal(1),plan:z.enum(['free','subscriber']),since:z.string(),subAt:z.number().optional(),trial:z.boolean(),issues:z.array(storedIssue).max(KEEP),read:z.array(z.string().max(20)).max(70)});
+const storeSchema=z.object({v:z.literal(1),plan:z.enum(['free','subscriber']),since:z.string(),subAt:z.number().optional(),tier:z.enum(['basic','pro']).optional(),trial:z.boolean(),issues:z.array(storedIssue).max(KEEP),read:z.array(z.string().max(20)).max(70)});
 export type InboxStore=z.infer<typeof storeSchema>;
 const empty=():InboxStore=>({v:1,plan:'free',since:kstNow().date,trial:false,issues:[],read:[]});
 
@@ -35,14 +36,14 @@ async function cookieInbox():Promise<InboxStore>{
 const serverPlan=cache(async()=>{
   const reader=await currentReader().catch(()=>null);
   const sub=reader?await subscriptionFor(reader.id).catch(()=>null):null;
-  return subscriptionActive(sub)?{plan:'subscriber' as const,startedAt:new Date(sub!.started_at)}:{plan:'free' as const,startedAt:null};
+  return subscriptionActive(sub)?{plan:'subscriber' as const,startedAt:new Date(sub!.started_at),tier:paidPlan(sub!.plan_id).tier}:{plan:'free' as const,startedAt:null,tier:undefined};
 });
 export async function readInbox():Promise<InboxStore>{
   const store=await cookieInbox();
   if(!billingConfigured())return store;
-  const {plan,startedAt}=await serverPlan();
-  if(plan==='free')return store.plan==='free'?store:{...store,plan};
-  return {...store,plan,since:kstNow(startedAt!).date,subAt:Math.floor(startedAt!.getTime()/1000)};
+  const {plan,startedAt,tier}=await serverPlan();
+  if(plan==='free')return store.plan==='free'&&!store.tier?store:{...store,plan,tier:undefined};
+  return {...store,plan,tier,since:kstNow(startedAt!).date,subAt:Math.floor(startedAt!.getTime()/1000)};
 }
 // Server actions only: render code cannot set cookies.
 export async function writeInbox(store:InboxStore){
@@ -103,13 +104,17 @@ export function generationsUsed(store:InboxStore,now=new Date(),tz='Asia/Seoul')
   // A subscription starts with a full day's allowance, even if a trial edition was made earlier that day.
   return store.plan==='free'?(store.trial?1:0):store.issues.filter(i=>i.t==='m'&&i.d===today&&i.at>=(store.subAt||0)).length;
 }
-export function generationsLeft(store:InboxStore,now=new Date(),tz='Asia/Seoul'){return Math.max(0,plans[store.plan].generations-generationsUsed(store,now,tz));}
+// What the reader's plan allows. During the beta every subscriber gets Basic; with billing on, Pro comes from a paid Pro plan.
+export function planLimits(store:Pick<InboxStore,'plan'|'tier'>):{stories:number;generations:number}{
+  return store.plan==='free'?plans.free:tierLimits[(store.tier||'basic') as Tier];
+}
+export function generationsLeft(store:InboxStore,now=new Date(),tz='Asia/Seoul'){return Math.max(0,planLimits(store).generations-generationsUsed(store,now,tz));}
 
 // A fresh edition: subscribers get a different turn of their reading list for each of today's three slots.
 // With a reading profile, the edition leads with unread stories on topics the reader keeps opening.
 export function newEdition(s:NewsletterSelection,store:InboxStore,now=new Date(),profile?:ReadingProfile){
   const today=zonedNow(now,s.tz).date,slot=store.issues.filter(i=>i.t==='m'&&i.d===today).length+1;
-  const ids=pickEdition(s,plans[store.plan].stories,editionSeed(today,slot),profile?(list:Article[])=>personalOrder(list,profile):undefined);
+  const ids=pickEdition(s,planLimits(store).stories,editionSeed(today,slot),profile?(list:Article[])=>personalOrder(list,profile):undefined);
   const key=`m-${compact(today)}-${slot}`;
   return {key,ids,stored:{k:key,t:'m' as const,d:today,at:Math.floor(now.getTime()/1000),c:ids.map(code).join('')}};
 }

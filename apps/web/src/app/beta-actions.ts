@@ -7,7 +7,8 @@ import {BETA_COOKIE,DRAFT_COOKIE,betaReader,savedOrDefaultSelection} from '@/lib
 import {admin,currentReader,deliveryConfigured,saveReaderSelection} from '@/lib/beta-store';
 import {mailEdition,mailReady,requestMail,stopMail} from '@/lib/edition-mail';
 import {generationsLeft,inboxIssues,newEdition,readInbox,setPlanIn,writeInbox} from '@/lib/inbox';
-import {billingConfigured,cancelSubscription,resumeSubscription} from '@/lib/billing';
+import {billingConfigured,cancelSubscription,resumeSubscription,changePlan} from '@/lib/billing';
+import {isPaidPlanId} from '@/lib/billing-plans';
 import {requestLoginLink} from '@/lib/account';
 import {accents,articleStyles,levels,localizeError,newsletterSelectionSchema,selectionQuery,themes,type NewsletterSelection} from '@/lib/newsletter';
 import {getLocale} from '@/lib/locale';
@@ -156,6 +157,14 @@ export async function resumePlan(){
   const ok=reader?await resumeSubscription(reader.id):false;
   revalidatePath('/','layout');
   redirect(`/my/billing?state=${ok?'resumed':'resume-failed'}`);
+}
+// Switch 기본·프로·연간 from the next payment on (no card needed: the registered card is charged at renewal).
+export async function changeBillingPlan(form:FormData){
+  const plan=form.get('plan');
+  const reader=billingConfigured()?await currentReader():null;
+  const ok=reader&&isPaidPlanId(plan)?await changePlan(reader.id,plan):false;
+  revalidatePath('/','layout');
+  redirect(`/my/billing?state=${ok?'plan-changed':'plan-failed'}`);
 }
 // "Sign in by mail" on the login page; the answer is the same whether or not the address is known.
 export async function mailLogin(form:FormData){
