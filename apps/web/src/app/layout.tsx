@@ -1,8 +1,9 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { getLocale } from '@/lib/locale';
 import { Libre_Baskerville, Noto_Serif_KR } from 'next/font/google';
 import { MotionLayer } from '@/components/motion';
 import { appOrigin } from '@/lib/env';
+import { ServiceWorker } from '@/components/service-worker';
 import './globals.css';
 
 // Site type: Libre Baskerville for Latin, Noto Serif KR for Hangul (Baskerville has no Korean glyphs).
@@ -14,10 +15,16 @@ export async function generateMetadata():Promise<Metadata>{
   // Absolute links for link previews; pages that are shared (stories, invites) set their own title and image.
   let metadataBase:URL|undefined;try{metadataBase=new URL(appOrigin());}catch{metadataBase=undefined;}
   return {metadataBase,title:'Personal Intelligence Loop',description,
+    applicationName:'loop.',
     openGraph:{type:'website',siteName:'loop.',locale:en?'en_US':'ko_KR',title:en?'loop. · Your interests, on one page.':'loop. · 당신의 관심이, 하나의 지면으로.',description,images:[{url:`/og/site${en?'?lang=en':''}`,width:1200,height:630}]},
-    twitter:{card:'summary_large_image'}};
+    twitter:{card:'summary_large_image'},
+    // Home-screen app on iPhone/iPad: full-screen window, dark status bar, its own name and icon.
+    appleWebApp:{capable:true,title:'loop.',statusBarStyle:'black'},
+    icons:{icon:[{url:'/icons/icon.svg',type:'image/svg+xml'},{url:'/icons/icon-192.png',sizes:'192x192',type:'image/png'}],apple:[{url:'/icons/apple-touch-icon.png',sizes:'180x180'}]},
+    formatDetection:{telephone:false}};
 }
+export const viewport:Viewport={themeColor:'#0d0d0e',colorScheme:'dark',width:'device-width',initialScale:1};
 export default async function Layout({children}:{children:React.ReactNode}) {
   const loc=await getLocale();
-  return <html lang={loc} className={`${baskerville.variable} ${serifKr.variable}`}><head><link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css"/></head><body><a className="skip" href="#main">{loc==='en'?'Skip to content':'본문으로 건너뛰기'}</a>{children}<MotionLayer/></body></html>;
+  return <html lang={loc} className={`${baskerville.variable} ${serifKr.variable}`}><head><link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css"/></head><body><a className="skip" href="#main">{loc==='en'?'Skip to content':'본문으로 건너뛰기'}</a>{children}<MotionLayer/><ServiceWorker/></body></html>;
 }

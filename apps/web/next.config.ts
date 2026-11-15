@@ -13,6 +13,14 @@ const config: NextConfig = {
     ] }, {
       // Preview images are the same for everyone; let KakaoTalk, X and the CDN keep them.
       source: '/og/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' }]
+    }, {
+      // The service worker must always be re-checked so fixes reach installed apps, and may only load same-origin code.
+      source: '/sw.js', headers: [
+        { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+        { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self'" }
+      ] }, {
+      source: '/icons/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }]
     }];
   }
 };
