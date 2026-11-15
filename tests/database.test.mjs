@@ -1,19 +1,22 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {createRequire} from 'node:module';
 import {PGlite} from '@electric-sql/pglite';
+import ts from 'typescript';
 
 const root=new URL('../',import.meta.url);
 const migration=await readFile(new URL('supabase/migrations/202610150001_core.sql',root),'utf8');
 const personalMigration=await readFile(new URL('supabase/migrations/202610170001_newsletter_profiles.sql',root),'utf8');
 const multiMigration=await readFile(new URL('supabase/migrations/202610180001_multi_select_profiles.sql',root),'utf8');
+const expandSelection=await readFile(new URL('supabase/migrations/20261115000200_expand_profile_selection.sql',root),'utf8');
 const deliveryMigration=await readFile(new URL('supabase/migrations/202610180002_beta_delivery.sql',root),'utf8');
 const seed=await readFile(new URL('supabase/seed.sql',root),'utf8');
 const U1='11111111-1111-4111-8111-111111111111',U2='22222222-2222-4222-8222-222222222222';
 const E1='33333333-3333-4333-8333-333333333333',E2='44444444-4444-4444-8444-444444444444';
 const A1='55555555-5555-4555-8555-555555555555';
 
-async function db(){
+async function db(expanded=true){
   const db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create schema auth;
     create table auth.users(id uuid primary key);
@@ -21,8 +24,61 @@ async function db(){
     grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;
     insert into auth.users values('${U1}'),('${U2}');`);
   await db.exec(migration);await db.exec(personalMigration);await db.exec(multiMigration);await db.exec(deliveryMigration);await db.exec(seed);
+  if(expanded)await db.exec(expandSelection);
   return db;
 }
+
+test('the profile DB accepts the current builder catalog and continues to isolate account data',async()=>{
+  const source=await readFile(new URL('apps/web/src/lib/newsletter.ts',root),'utf8');
+  const catalog={exports:{}};
+  const javascript=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+  new Function('require','module','exports',javascript)(createRequire(import.meta.url),catalog,catalog.exports);
+  const {industries,continents,countries,newsletterSelectionSchema}=catalog.exports;
+  const d=await db(false);
+  try{
+    const {t1}=await setup(d);
+    const save=(selection,uid=U1)=>d.query(`insert into public.newsletter_profiles
+      (tenant_id,user_id,industry,industries,subtopics,scope,country,countries,level)
+      values($1,$2,$3,$4,$5,'country',$6,$7,'expert')
+      on conflict(tenant_id,user_id) do update set industry=excluded.industry,industries=excluded.industries,
+      subtopics=excluded.subtopics,scope=excluded.scope,country=excluded.country,countries=excluded.countries,level=excluded.level
+      returning industry,industries,subtopics,country,countries,level`,
+      [t1,uid,selection.industries[0],selection.industries,selection.subtopics,selection.countries[0],selection.countries]);
+    const old={industries:['technology'],subtopics:['ai'],countries:['US']};
+    const newer={industries:['education','mobility'],subtopics:['edtech','ev'],countries:['EUROPE','MX']};
+    await as(d,'authenticated',U1,async()=>{
+      await save(old);
+      await assert.rejects(save(newer),error=>error.code==='23514');
+    });
+    await d.exec(expandSelection);
+    await as(d,'authenticated',U1,async()=>{
+      const preserved=(await d.query('select industries, subtopics, countries from public.newsletter_profiles')).rows[0];
+      assert.deepEqual(preserved,old);
+      for(const field of industries){
+        const selection=newsletterSelectionSchema.parse({industries:[field.id],subtopics:field.topics.map(t=>t[0]),scope:'country',countries:['US']});
+        const [row]=(await save(selection)).rows;
+        assert.deepEqual(row.subtopics,selection.subtopics);
+      }
+      const regions=[...continents,...countries].map(g=>g[0]);
+      // Each current choice also becomes the legacy scalar if it is selected first.
+      for(const region of regions){
+        const [row]=(await save({...newer,countries:[region]})).rows;
+        assert.equal(row.country,region);
+      }
+      const large=newsletterSelectionSchema.parse({industries:industries.map(g=>g.id),subtopics:['cloud','edtech'],scope:'country',countries:regions.slice(0,8)});
+      const [row]=(await save(large)).rows;
+      assert.deepEqual(row.industries,large.industries);
+      assert.deepEqual(row.countries,large.countries);
+      await assert.rejects(save({...newer,subtopics:['cloud']}),error=>error.code==='23514');
+      await assert.rejects(save({...newer,countries:['XX']}),error=>error.code==='23514');
+      await assert.rejects(save({...newer,countries:regions.slice(0,9)}),error=>error.code==='23514');
+    });
+    await as(d,'authenticated',U2,async()=>{
+      assert.deepEqual((await d.query('select * from public.newsletter_profiles')).rows,[]);
+      await assert.rejects(save(newer,U2),/row-level security/);
+    });
+  } finally { await d.close(); }
+});
 async function as(db,role,uid,fn){
   await db.exec(`set role ${role};select set_config('request.jwt.claim.sub','${uid||''}',false)`);
   try{return await fn();}finally{await db.exec('reset role');}
