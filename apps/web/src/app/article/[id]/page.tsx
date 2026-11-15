@@ -12,12 +12,22 @@ import {withTerms,type Gloss} from '@/components/terms';
 import {contentLabel,countryName,industryName,levels,levelsEn,levelLabel,type Level} from '@/lib/newsletter';
 import {getL,getLocale} from '@/lib/locale';
 import type {Locale} from '@/lib/i18n';
+import {ShareBar} from '@/components/share-bar';
+import {kakaoKey,shareText} from '@/lib/share';
+import {currentReader} from '@/lib/beta-store';
+import {codeFor,withRef} from '@/lib/referral';
+import {appOrigin} from '@/lib/env';
 
 export async function generateMetadata({params}:{params:Promise<{id:string}>}){
   const {id}=await params;await ensureArticles([id]);
   const [raw,loc]=[articleById(id),await getLocale()];
   const a=raw&&localize(raw,loc);
-  return {title:a?`${a.title} · loop.`:loc==='en'?'Story not found':'기사 없음'};
+  if(!a)return {title:loc==='en'?'Story not found':'기사 없음'};
+  // Link previews in KakaoTalk, X and messengers: the story's title, summary and a generated cover image.
+  const lang=loc==='en'&&hasEnglish(id)?'en':'ko',image=`/og/article/${id}${lang==='en'?'?lang=en':''}`;
+  return {title:`${a.title} · loop.`,description:a.dek,alternates:{canonical:`/article/${id}`},
+    openGraph:{type:'article',siteName:'loop.',locale:lang==='en'?'en_US':'ko_KR',url:`/article/${id}`,title:a.title,description:a.dek,images:[{url:image,width:1200,height:630,alt:a.title}]},
+    twitter:{card:'summary_large_image',title:a.title,description:a.dek,images:[image]}};
 }
 const kindEn:Record<string,string>={'원문':'Primary source','공식 자료':'Official','학술 자료':'Academic','통계':'Statistics','보도':'News report'};
 
@@ -44,6 +54,10 @@ export default async function ArticlePage({params,searchParams}:{params:Promise<
   const bare=(h:string)=>h.replace(/^\s*\d+\s*장\s*[.:·]?\s*/,'').replace(/^\s*Chapter\s+\d+\s*[.:·]?\s*/i,'');
   const pages=[...a.pages.map(p=>({...p,heading:bare(p.heading),deep:false})),...(level==='expert'?[{heading:bare(a.deepDive.heading),easy:'',paragraphs:a.deepDive.paragraphs,deep:true}]:[])];
   const total=pages.length+1;
+  // The share link carries the reader's invite code, so friends who join from this story count as their invite.
+  const reader=beta?await currentReader().catch(()=>null):null,code=reader?await codeFor(reader.id):null;
+  let origin='';try{origin=appOrigin();}catch{origin='';}
+  const shareUrl=withRef(`${origin}/article/${a.id}`,code),shareImage=`${origin}/og/article/${a.id}${loc==='en'?'?lang=en':''}`;
   const regions=a.regions.map(r=>r==='GLOBAL'?L('전 세계','Worldwide'):countryName(r,loc)).join(' · ');
   return <div className="site-page article-site"><PublicNav/><TermFit/>{seen&&<WordCollector lang={loc} articleId={a.id} articleTitle={a.title}/>}<div className="reading-progress" aria-hidden="true"/><main id="main" className="article-view">
     {beta&&<TrackRead id={a.id}/>}
@@ -63,5 +77,7 @@ export default async function ArticlePage({params,searchParams}:{params:Promise<
       <footer className="sources" id="sources"><h2>{L('참고한 자료','Sources')}</h2><p className="muted">{L('본문의 [번호]는 아래 자료를 가리킵니다. 숫자와 날짜는 원문에서 다시 확인하세요.','Each [number] in the text points to a source below. Check numbers and dates against the originals.')}</p><ol>{a.sources.map((s,i)=><li key={s.url} id={`source-${i+1}`}><span className="source-kind">{loc==='en'?kindEn[s.kind]||s.kind:s.kind}</span><a href={s.url} target="_blank" rel="noopener noreferrer">{s.title} ↗</a><small>{s.publisher} · {s.year}</small></li>)}</ol><p className="quiet-note">{a.live?L(`이 소식은 위 공식 발표를 바탕으로 AI(${a.live.model})가 ${a.asOf}에 새로 쓴 글이며 원문의 문장을 옮기지 않았습니다. 틀린 곳이 있으면 원문이 기준입니다.`,`This story was newly written by AI (${a.live.model}) on ${a.asOf} from the official releases above, without copying their sentences. Where it differs, the original prevails.`):L('이 해설은 위 자료를 바탕으로 loop. 베타 편집진이 다시 쓴 글이며 원문의 문장을 옮기지 않았습니다.','This explainer was rewritten by the loop. beta editors from the sources above and does not copy their sentences. It was first written in Korean and translated into English.')}</p></footer>
       </div>
       <footer className="explainer-foot"><b>loop.</b><span>{L('원문에서 다음 생각까지.','From the source to your next thought.')}</span></footer>
-    </article></main><footer className="site-footer"><span>loop.</span><span>{siteL('원문에서 다음 생각까지.','From the source to your next thought.')}</span></footer></div>;
+    </article>
+    <section className="article-share" aria-label={siteL('이 글 공유하기','Share this story')}><div><h2>{siteL('이 글, 누군가에게 필요할지도 몰라요.','Someone you know might need this.')}</h2><p className="muted">{code?siteL('공유한 링크로 친구가 베타에 들어오면 나의 초대로 기록돼요.','When a friend joins the beta from your link, it counts as your invite.'):siteL('링크를 열면 가입 없이 바로 읽을 수 있어요.','Anyone with the link can read it, no sign-up needed.')}</p></div><ShareBar url={shareUrl} title={a.title} text={a.dek} image={shareImage} kakaoKey={kakaoKey()} t={shareText(siteLoc==='en')}/></section>
+    </main><footer className="site-footer"><span>loop.</span><span>{siteL('원문에서 다음 생각까지.','From the source to your next thought.')}</span></footer></div>;
 }
