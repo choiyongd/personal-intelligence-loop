@@ -17,6 +17,7 @@ import {kakaoKey,shareText} from '@/lib/share';
 import {currentReader} from '@/lib/beta-store';
 import {codeFor,withRef} from '@/lib/referral';
 import {appOrigin} from '@/lib/env';
+import {ReaderAnswers} from '@/components/reader-answers';
 
 export async function generateMetadata({params}:{params:Promise<{id:string}>}){
   const {id}=await params;await ensureArticles([id]);
@@ -36,8 +37,8 @@ const kindEn:Record<string,string>={'원문':'Primary source','공식 자료':'O
 function Cited({text,glossary,seen,loc}:{text:string;glossary?:Gloss[];seen?:Set<string>;loc:Locale}){
   return <>{text.split(/(\[\d+\])/).map((part,i)=>{const m=/^\[(\d+)\]$/.exec(part);return m?<sup key={i}><a href={`#source-${m[1]}`} aria-label={loc==='en'?`Source ${m[1]}`:`출처 ${m[1]}`}>[{m[1]}]</a></sup>:seen?<span key={i}>{withTerms(part,glossary,seen,`p${i}`)}</span>:part;})}</>;
 }
-export default async function ArticlePage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{level?:string}>}){
-  const [{id},{level:raw},{loc:siteLoc,L:siteL}]=await Promise.all([params,searchParams,getL()]);
+export default async function ArticlePage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{level?:string;answer?:string;q?:string}>}){
+  const [{id},{level:raw,answer,q:pick},{loc:siteLoc,L:siteL}]=await Promise.all([params,searchParams,getL()]);
   await ensureArticles([id]);
   const original=articleById(id);if(!original)notFound();
   // An English reader gets the translation when there is one; otherwise the Korean original with a note.
@@ -72,7 +73,8 @@ export default async function ArticlePage({params,searchParams}:{params:Promise<
         <div className="explainer-body">{p.paragraphs.map((t,j)=><p key={j}><Cited text={t} glossary={a.glossary} seen={seen} loc={loc}/></p>)}</div>
         {i===0&&a.keyFacts.length>0&&<aside className="key-facts" aria-label={L('핵심 숫자','Key numbers')}><h3>{L('핵심 숫자','Key numbers')}</h3><dl>{a.keyFacts.map(f=><div key={f.label}><dt>{f.label}</dt><dd>{f.value}<sup><a href={`#source-${f.source}`}>[{f.source}]</a></sup></dd></div>)}</dl></aside>}
       </section>)}
-      <section className="explainer-page think" aria-labelledby="page-think"><p className="page-label">{L(`${total}장 · 질문과 생각거리`,`Chapter ${total} · Questions and ideas`)}</p><h2 id="page-think">{L('읽고 나서, 스스로에게.','After reading, ask yourself.')}</h2><div className="think-grid"><div><h3>{L('확인 질문','Check questions')}</h3><ol>{a.questions.map(q=><li key={q}>{q}</li>)}</ol></div><div><h3>{L('생각거리','Things to think about')}</h3><ul>{a.thoughts.map(t=><li key={t}>{t}</li>)}</ul></div></div></section>
+      <section className="explainer-page think" aria-labelledby="page-think"><p className="page-label">{L(`${total}장 · 질문과 생각거리`,`Chapter ${total} · Questions and ideas`)}</p><h2 id="page-think">{L('읽고 나서, 스스로에게.','After reading, ask yourself.')}</h2><div className="think-grid"><div><h3>{L('확인 질문','Check questions')}</h3><ol>{a.questions.map((q,i)=><li key={q}>{q} <Link className="answer-link" href={`/article/${a.id}?level=${level}&q=q${i}#answers`}>{L('답 남기기','Answer')}</Link></li>)}</ol></div><div><h3>{L('생각거리','Things to think about')}</h3><ul>{a.thoughts.map((t,i)=><li key={t}>{t} <Link className="answer-link" href={`/article/${a.id}?level=${level}&q=t${i}#answers`}>{L('답 남기기','Answer')}</Link></li>)}</ul></div></div></section>
+      <ReaderAnswers articleId={a.id} level={level} loc={loc} status={answer} pick={pick}/>
       {level!=='intro'&&a.glossary.length>0&&<details className="glossary glossary-end"><summary>{L(`이 글의 낱말 ${a.glossary.length}개`,`${a.glossary.length} words in this story`)} <small>{L('뜻 확인하기','See meanings')}</small></summary><dl>{a.glossary.map(g=><div key={g.term}><dt>{g.term}</dt><dd>{g.meaning}</dd></div>)}</dl>{seen&&<p className="glossary-book"><WordBookLink loc={loc}/></p>}</details>}
       <footer className="sources" id="sources"><h2>{L('참고한 자료','Sources')}</h2><p className="muted">{L('본문의 [번호]는 아래 자료를 가리킵니다. 숫자와 날짜는 원문에서 다시 확인하세요.','Each [number] in the text points to a source below. Check numbers and dates against the originals.')}</p><ol>{a.sources.map((s,i)=><li key={s.url} id={`source-${i+1}`}><span className="source-kind">{loc==='en'?kindEn[s.kind]||s.kind:s.kind}</span><a href={s.url} target="_blank" rel="noopener noreferrer">{s.title} ↗</a><small>{s.publisher} · {s.year}</small></li>)}</ol><p className="quiet-note">{a.live?L(`이 소식은 위 공식 발표를 바탕으로 AI(${a.live.model})가 ${a.asOf}에 새로 쓴 글이며 원문의 문장을 옮기지 않았습니다. 틀린 곳이 있으면 원문이 기준입니다.`,`This story was newly written by AI (${a.live.model}) on ${a.asOf} from the official releases above, without copying their sentences. Where it differs, the original prevails.`):L('이 해설은 위 자료를 바탕으로 loop. 베타 편집진이 다시 쓴 글이며 원문의 문장을 옮기지 않았습니다.','This explainer was rewritten by the loop. beta editors from the sources above and does not copy their sentences. It was first written in Korean and translated into English.')}</p></footer>
       </div>
