@@ -39,8 +39,8 @@ export async function dispatchDue(now=new Date()){
       const hotIds=hotFor(issue.selectionParsed,issue.article_ids).map(h=>h.id);
       const mail=renderIssueEmail({selection:issue.selectionParsed,articles,hotIds,origin,readerName:reader.name,unsubscribeUrl:unsub,archiveUrl:`${origin}/my/inbox/s-${issue.issue_date.replaceAll('-','')}`,
         dateLabel:new Intl.DateTimeFormat(intlLocale(s.lang),{timeZone:s.tz,year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(now)});
-      await sendMail({to:reader.email,...mail,headers:{'List-Unsubscribe':`<${unsub}>`,'List-Unsubscribe-Post':'List-Unsubscribe=One-Click'}});
-      await admin().from('beta_issues').update({delivery:'sent',sent_at:new Date().toISOString(),last_error:null}).eq('id',issue.id);
+      const sent=await sendMail({to:reader.email,...mail,headers:{'List-Unsubscribe':`<${unsub}>`,'List-Unsubscribe-Post':'List-Unsubscribe=One-Click'}});
+      await admin().from('beta_issues').update({delivery:'sent',sent_at:new Date().toISOString(),last_error:null,mail_id:sent.id}).eq('id',issue.id);
       summary.sent++;
     }catch(e){
       summary.failed++;
