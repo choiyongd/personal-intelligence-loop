@@ -3,6 +3,8 @@ import {redirect} from 'next/navigation';
 import {PublicNav} from '@/components/public-nav';
 import {NewsletterPaper} from '@/components/newsletter-paper';
 import {DeliveryPanel} from '@/components/delivery-panel';
+import {AppPanel} from '@/components/app-panel';
+import {vapidPublicKey} from '@/lib/push';
 import {ThemePicker} from '@/components/theme-picker';
 import {BetaBanner} from '@/components/beta-banner';
 import {WordBookLink} from '@/components/word-book-link';
@@ -56,6 +58,7 @@ export default async function My({searchParams}:{searchParams:Promise<{mail?:str
     <Recommendations items={recs} suggestions={suggestions} selection={selection} reads={profile.count} loc={loc}/>
     <DeliveryPanel reader={reader} selection={selection} available={available} mailReady={mailConfigured()} plan={store.plan} notice={mail} loc={loc}/>
     <InvitePanel referral={referral} canCreate={available&&!reader} origin={origin} loc={loc}/>
+    <AppPanel vapidKey={vapidPublicKey()} loc={loc}/>
     {latest?<><div className="paper-tools"><p className="muted">{L('가장 최근 호','Latest issue')} · {new Intl.DateTimeFormat(intlLocale(loc),{timeZone:selection.tz,month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(latest.at))}</p><ThemePicker current={selection.theme} loc={loc}/></div>
       <BetaBanner loc={loc}/><NewsletterPaper selection={selection} stories={editionStories(selection,latest.articleIds)} editorial issuedAt={new Date(latest.at).toISOString()}/></>
     :<div className="paper-tools"><p className="muted">{L('만들기 전에 지면 디자인을 골라 두세요.','Choose a page design before you make it.')}</p><ThemePicker current={selection.theme} loc={loc}/></div>}

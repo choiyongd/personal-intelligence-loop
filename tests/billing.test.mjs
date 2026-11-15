@@ -156,7 +156,7 @@ test('the plan migration applies on top of the billing tables',async()=>{
   await db.exec(`create role anon;create role authenticated;
     create table public.beta_readers(id uuid primary key default gen_random_uuid(),email text,email_confirmed_at timestamptz);`);
   await db.exec(readFileSync(resolve(here,'../supabase/migrations/202611010001_billing.sql'),'utf8'));
-  await db.exec(readFileSync(resolve(here,'../supabase/migrations/202611140001_billing_plans.sql'),'utf8'));
+  await db.exec(readFileSync(resolve(here,'../supabase/migrations/202611140004_billing_plans.sql'),'utf8'));
   const {rows:[{id}]}=await db.query('insert into public.beta_readers default values returning id');
   await db.query(`insert into public.billing_subscriptions(reader_id,customer_key,amount,current_period_end) values($1,'pil_x',4900,now())`,[id]);
   assert.equal((await db.query('select plan_id,next_plan_id from public.billing_subscriptions')).rows[0].plan_id,'basic');

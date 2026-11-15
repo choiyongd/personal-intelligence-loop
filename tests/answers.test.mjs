@@ -9,7 +9,7 @@ const sql=name=>readFile(new URL(`supabase/migrations/${name}`,root),'utf8');
 async function db(){
   const d=new PGlite();
   await d.exec('create role anon;create role authenticated;create role pil_worker;');
-  for(const m of ['202610180002_beta_delivery.sql','202611140001_discussion_answers.sql'])await d.exec(await sql(m));
+  for(const m of ['202610180002_beta_delivery.sql','202611140006_discussion_answers.sql'])await d.exec(await sql(m));
   return d;
 }
 const reader=async(d,name)=>(await d.query(`insert into public.beta_readers(token_hash,name,selection,unsubscribe_token) values(repeat('a',64),$1,'{}',repeat('u',32)) returning id`,[name])).rows[0].id;

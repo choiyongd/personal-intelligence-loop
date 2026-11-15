@@ -174,7 +174,7 @@ test('beta reader tables are server-only and one scheduled issue exists per read
 
 test('every beta reader gets a unique invite code and can record who invited them, never themselves',async()=>{
   const d=await db();try{
-    const referrals=await readFile(new URL('supabase/migrations/202611140001_referrals.sql',root),'utf8');
+    const referrals=await readFile(new URL('supabase/migrations/202611140005_referrals.sql',root),'utf8');
     const reader=async name=>(await d.query(`insert into public.beta_readers(token_hash,name,selection,unsubscribe_token) values (repeat('a',64),$1,'{}'::jsonb,repeat('u',32)) returning id`,[name])).rows[0].id;
     const before=await reader('기존 독자');
     await d.exec(referrals);await d.exec(referrals); // safe to run twice

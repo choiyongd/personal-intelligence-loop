@@ -6,7 +6,7 @@ import {operator} from './operator';
 import type {Locale} from './i18n';
 
 // Readers' answers to the check questions and things to think about at the end of each article.
-// Stored in server-only tables (migration 202611140001); every read and write goes through the service key here.
+// Stored in server-only tables (migration 202611140006); every read and write goes through the service key here.
 export type Prompt={key:string;text:string;kind:'question'|'thought'};
 export const MAX_BODY=1000,DAILY_LIMIT=20,HIDE_AFTER_REPORTS=3;
 export const reportReasons=['abuse','spam','privacy','other'] as const;
