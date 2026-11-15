@@ -7,7 +7,7 @@
   - 아이폰·아이패드는 iOS 16.4 이상에서, **홈 화면에 추가한 앱 안에서만** 알림을 켤 수 있습니다(애플 정책).
 
 ## 켜는 방법 (운영자가 한 번)
-1. **SQL 실행**: Supabase 대시보드 › SQL Editor에서 `supabase/migrations/202611140001_web_push.sql` 내용을 실행합니다. 알림 신청(`push_subscriptions`)과 하루 1회 발송 기록(`push_sends`) 표가 생깁니다. 서버 키로만 읽고 쓸 수 있습니다.
+1. **SQL 실행**: Supabase 대시보드 › SQL Editor에서 `supabase/migrations/202611140007_web_push.sql` 내용을 실행합니다. 알림 신청(`push_subscriptions`)과 하루 1회 발송 기록(`push_sends`) 표가 생깁니다. 서버 키로만 읽고 쓸 수 있습니다.
 2. **키 만들기**: 아무 컴퓨터에서 `npx web-push generate-vapid-keys`를 한 번 실행하면 Public Key와 Private Key가 나옵니다.
 3. **Vercel 환경 변수**: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`(공개 금지), 선택으로 `VAPID_SUBJECT`(예: `mailto:운영자메일`)를 넣고 다시 배포합니다. 키를 나중에 바꾸면 기존 신청이 모두 끊기니 한 번 정하면 그대로 두세요.
 4. **확인**: 휴대폰에서 `/my` › "새 소식 알림 켜기" → 허용하면 바로 시험 알림이 옵니다("시험 알림 보내기"는 1분에 한 번).

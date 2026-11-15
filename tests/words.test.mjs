@@ -52,7 +52,7 @@ test('rejects malformed input and keeps the book within its limit',()=>{
 test('word book table is server-only and enforces one row per reader, language and word',async()=>{
   const db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create table public.beta_readers(id uuid primary key default gen_random_uuid());`);
-  await db.exec(await readFile(new URL('../supabase/migrations/202611140001_word_book.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/202611140003_word_book.sql',import.meta.url),'utf8'));
   const id=(await db.query('insert into public.beta_readers default values returning id')).rows[0].id;
   await db.query(`insert into public.reader_words(reader_id,lang,term,meaning) values($1,'ko','관세','세금')`,[id]);
   await assert.rejects(db.query(`insert into public.reader_words(reader_id,lang,term,meaning) values($1,'ko','관세','다른 뜻')`,[id]));
