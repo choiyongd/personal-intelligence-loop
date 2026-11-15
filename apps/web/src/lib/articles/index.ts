@@ -16,7 +16,7 @@ import {articles as moreEnvironment} from './more-environment';
 import {articles as moreWork} from './more-work';
 import {articles as moreIndustry} from './more-industry';
 import {articles as moreEconomy} from './more-economy';
-import {allTopics,continentOf,industries,selectedCountries,topicName,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
+import {allTopics,continentOf,industries,plans,selectedCountries,topicName,type Level,type NewsletterSelection,type NewsletterStory} from '../newsletter';
 import type {Locale} from '../i18n';
 import {english} from './en';
 
@@ -122,6 +122,16 @@ export function articleStory(raw:Article,level:Level,loc:Locale='ko'):Newsletter
     href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,thoughts:a.thoughts,easy:a.pages[0]?.easy||undefined,deep:a.deepDive?.heading,glossary:a.glossary,
     evidence:a.sources.map(src=>({source:src.publisher,url:src.url,title:src.title})),
   };
+}
+export function personalEditorialStories(selection:NewsletterSelection):NewsletterStory[]{
+  const inScope=scopeOf(selection);
+  const regions=selectedCountries(selection);
+  return allArticles
+    .filter(article=>inScope(article)&&selection.contentTypes.includes(article.type)
+      && (!regions.length||article.regions.some(region=>regions.includes(region))))
+    .sort((a,b)=>b.asOf.localeCompare(a.asOf))
+    .slice(0,plans.free.stories)
+    .map(article=>articleStory(article,selection.level,selection.lang));
 }
 // World editions always open with the top hot picks, even when they sit outside the chosen fields.
 export function hotFor(s:NewsletterSelection,ids?:string[]){

@@ -88,6 +88,29 @@ test('without live stories an edition is unchanged',()=>{
   assert.ok(a.length>=10);assert.ok(a.every(id=>!id.startsWith('n-')));
 });
 
+test('personal editorial stories use the saved topics and retain original evidence',()=>{
+  const selection={...defaultSelection,industries:['education','policy','technology','science'],
+    subtopics:['software','robotics','space','biology','physics','edtech','higher-ed','k12','society','migration'],
+    scope:'global',contentTypes:['article','research','news'],level:'expert'};
+  const stories=articles.personalEditorialStories(selection);
+  assert.equal(stories.length,10);
+  assert.equal(new Set(stories.map(story=>story.id)).size,stories.length);
+  for(const story of stories){
+    assert.ok(selection.industries.includes(story.industry));
+    assert.ok(story.topics.every(topic=>selection.subtopics.includes(topic)));
+    assert.equal(story.href,`/article/${story.id}?level=expert`);
+    assert.ok(story.evidence.some(source=>new URL(source.url).protocol==='https:'));
+    assert.equal(story.hot,undefined);
+  }
+});
+
+test('personal editorial stories respect narrow countries and content types',()=>{
+  const selection={...defaultSelection,industries:['education'],subtopics:['k12'],scope:'kr',contentTypes:['news']};
+  assert.deepEqual(articles.personalEditorialStories(selection).map(story=>story.id),['k12-explainer']);
+  assert.deepEqual(articles.personalEditorialStories({...selection,scope:'country',countries:['US']}),[]);
+  assert.deepEqual(articles.personalEditorialStories({...selection,contentTypes:['research']}),[]);
+});
+
 const {callUsage,addUsage}=load(`${lib}/live/cost.ts`);
 const {isNotice,capPerFeed,thinMaterial}=load(`${lib}/live/quality.ts`);
 
