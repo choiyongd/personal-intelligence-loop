@@ -5,7 +5,9 @@ import {appOrigin} from '../env';
 import {kstNow} from '../kst';
 import type {Article} from '../articles/types';
 import type {IndustryId} from '../newsletter';
-import {aiConfigured,citationProblems,liveModel,planStories,writeStory,type CandidateItem,type WriterSource} from './ai';
+import {aiConfigured,citationProblems,LiveCallError,liveModel,planStories,writeStory,type CandidateItem,type WriterSource} from './ai';
+import {addUsage,type CallUsage} from './cost';
+import {capPerFeed,isNotice,thinMaterial} from './quality';
 import {allowedUrl,feedById,feeds,type Feed} from './feeds';
 import {parseFeed,toText} from './rss';
 
@@ -75,27 +77,32 @@ export async function plan(now=new Date()){
   const since=new Date(now.getTime()-2*864e5).toISOString();
   const {data,error}=await admin().from('live_items').select('id,feed_id,title,summary,published_at').is('story_id',null).gte('collected_at',since).order('collected_at',{ascending:false}).limit(150);
   if(error)throw new Error(error.message);
-  const items:CandidateItem[]=(data||[]).flatMap(r=>{const f=feedById(r.feed_id);return f?[{id:r.id,publisher:f.publisher,title:r.title,summary:r.summary,publishedAt:r.published_at,regions:f.regions}]:[];});
-  if(!items.length){await logRun('plan',started,{date,items:0,stories:0});return {date,items:0,stories:0};}
+  const rows0=data||[];
+  // Notices and schedules never reach the editor, and no one feed may crowd out the rest.
+  const notices=rows0.filter(r=>isNotice(r.title)).length;
+  const kept=capPerFeed(rows0.filter(r=>!isNotice(r.title)));
+  const items:CandidateItem[]=kept.flatMap(r=>{const f=feedById(r.feed_id);return f?[{id:r.id,publisher:f.publisher,title:r.title,summary:r.summary,publishedAt:r.published_at,regions:f.regions}]:[];});
+  const screened={fetched:rows0.length,notices,capped:rows0.length-notices-kept.length};
+  if(!items.length){await logRun('plan',started,{date,items:0,stories:0,screened});return {date,items:0,stories:0};}
   try{
-    const stories=await planStories(items,dailyStories(),date);
+    const {stories,usage}=await planStories(items,dailyStories(),date);
     const rows=stories.map(s=>({id:storyId(date,s.itemIds),issue_date:date,industry:s.industry,topic:s.topic,regions:s.regions,angle:s.angle,item_ids:s.itemIds,type:s.type,status:'planned',model:liveModel()}));
     if(rows.length){
       const ins=await admin().from('live_articles').upsert(rows,{onConflict:'id',ignoreDuplicates:true});
       if(ins.error)throw new Error(ins.error.message);
       for(const r of rows)await admin().from('live_items').update({story_id:r.id}).in('id',r.item_ids);
     }
-    const stats={date,items:items.length,stories:rows.length};
+    const stats={date,items:items.length,stories:rows.length,screened,usage};
     await logRun('plan',started,stats);
     return stats;
-  }catch(e){await logRun('plan',started,{date,items:items.length},err(e));throw e;}
+  }catch(e){await logRun('plan',started,{date,items:items.length,screened,usage:e instanceof LiveCallError?e.usage:null},err(e));throw e;}
 }
 
-type StoryRow={id:string;issue_date:string;industry:string;topic:string;regions:string[];type:'news'|'research';angle:string;item_ids:number[];status:string;attempts:number;last_error:string|null};
+type StoryRow={id:string;issue_date:string;industry:string;topic:string;regions:string[];type:'news'|'research';angle:string;item_ids:number[];status:string;attempts:number;last_error:string|null;input_tokens:number;output_tokens:number;cost_usd:number};
 const MAX_ATTEMPTS=2,STALE_MS=10*60_000;
 async function claimable(date:string){
   const stale=new Date(Date.now()-STALE_MS).toISOString();
-  const {data,error}=await admin().from('live_articles').select('id,issue_date,industry,topic,regions,type,angle,item_ids,status,attempts,last_error')
+  const {data,error}=await admin().from('live_articles').select('id,issue_date,industry,topic,regions,type,angle,item_ids,status,attempts,last_error,input_tokens,output_tokens,cost_usd')
     .gte('issue_date',addDays(date,-1)).lt('attempts',MAX_ATTEMPTS)
     .or(`status.eq.planned,status.eq.failed,and(status.eq.writing,claimed_at.lt.${stale})`).order('created_at').limit(40);
   if(error)throw new Error(error.message);
@@ -116,7 +123,7 @@ async function sourcesFor(row:StoryRow):Promise<WriterSource[]>{
   }));
 }
 
-function toArticle(row:StoryRow,w:Awaited<ReturnType<typeof writeStory>>,sources:WriterSource[]):Article{
+function toArticle(row:StoryRow,w:Awaited<ReturnType<typeof writeStory>>['article'],sources:WriterSource[]):Article{
   return {
     id:row.id,industry:row.industry as IndustryId,topic:row.topic,regions:row.regions,type:row.type,
     title:w.title,dek:w.dek,asOf:row.issue_date,glossary:w.glossary,
@@ -126,20 +133,33 @@ function toArticle(row:StoryRow,w:Awaited<ReturnType<typeof writeStory>>,sources
   };
 }
 
+// Cost accumulates across attempts so a story that failed once still shows what it really cost.
+function spent(row:StoryRow,u:CallUsage|null){
+  if(!u)return {};
+  return {input_tokens:(row.input_tokens||0)+u.input+u.cacheRead+u.cacheWrite,output_tokens:(row.output_tokens||0)+u.output,cost_usd:Math.round(((Number(row.cost_usd)||0)+(u.usd||0))*1e5)/1e5};
+}
 async function writeOne(row:StoryRow){
+  let usage:CallUsage|null=null;
   try{
     const sources=await sourcesFor(row);
     if(!sources.length)throw new Error('no-sources');
-    const written=await writeStory(row.angle,sources,row.issue_date);
-    const problems=citationProblems(written,sources.length);
+    // Headline-only stories are dropped before they cost a writer call; a retry would not add material.
+    if(thinMaterial(sources)){
+      await admin().from('live_articles').update({status:'failed',attempts:5,last_error:'thin-material'}).eq('id',row.id);
+      return {id:row.id,ok:false as const,error:'thin-material',usage:null};
+    }
+    const res=await writeStory(row.angle,sources,row.issue_date);
+    usage=res.usage;
+    const problems=citationProblems(res.article,sources.length);
     if(problems.length)throw new Error(`citations:${problems.slice(0,2).join('|')}`);
-    const article=toArticle(row,written,sources);
-    const {error}=await admin().from('live_articles').update({article,status:'published',published_at:new Date().toISOString(),last_error:null,model:liveModel()}).eq('id',row.id);
+    const article=toArticle(row,res.article,sources);
+    const {error}=await admin().from('live_articles').update({article,status:'published',published_at:new Date().toISOString(),last_error:null,model:usage.model,...spent(row,usage)}).eq('id',row.id);
     if(error)throw new Error(error.message);
-    return {id:row.id,ok:true as const};
+    return {id:row.id,ok:true as const,usage};
   }catch(e){
-    await admin().from('live_articles').update({status:'failed',last_error:err(e)}).eq('id',row.id);
-    return {id:row.id,ok:false as const,error:err(e)};
+    if(e instanceof LiveCallError)usage=e.usage;
+    await admin().from('live_articles').update({status:'failed',last_error:err(e),...spent(row,usage)}).eq('id',row.id);
+    return {id:row.id,ok:false as const,error:err(e),usage};
   }
 }
 
@@ -156,7 +176,8 @@ export async function write(now=new Date(),batch=Math.min(6,Math.max(1,Number(pr
   }
   const results=await Promise.all(mine.map(writeOne));
   const remaining=(await claimable(date)).length;
-  const stats={date,written:results.filter(r=>r.ok).length,failed:results.filter(r=>!r.ok).map(r=>`${r.id}:${'error' in r?r.error:''}`),remaining};
+  const usage=addUsage(results.flatMap(r=>r.usage?[r.usage]:[]));
+  const stats={date,written:results.filter(r=>r.ok).length,failed:results.filter(r=>!r.ok).map(r=>`${r.id}:${'error' in r?r.error:''}`),remaining,usage};
   await logRun('write',started,stats);
   return stats;
 }

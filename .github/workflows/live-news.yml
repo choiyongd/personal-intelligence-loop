@@ -1,10 +1,14 @@
-# Every morning in Korea (05:07 KST) collect new official releases, let the editor pick the day's stories,
+# Every morning in Korea collect new official releases, let the editor pick the day's stories,
 # then write them a few at a time. Uses the same repository secrets as the newsletter dispatch:
 # DISPATCH_URL (its /api/dispatch is swapped for /api/live) and CRON_SECRET.
 name: live-news
 on:
+  # GitHub often starts scheduled runs hours late, so three slots before the 07:00 KST mail.
+  # Every step is safe to repeat: collect skips known links, plan skips a planned day, write only takes open stories.
   schedule:
-    - cron: '7 20 * * *'
+    - cron: '7 16 * * *'
+    - cron: '7 18 * * *'
+    - cron: '37 19 * * *'
   workflow_dispatch:
 permissions: {}
 concurrency:
