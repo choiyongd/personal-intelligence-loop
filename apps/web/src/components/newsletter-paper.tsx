@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import {TermFit} from '@/components/term-fit';
+import {WordCollector} from '@/components/word-collector';
 import {hotBasis} from '@/lib/articles/hot';
 import {lx,intlLocale,type Locale} from '@/lib/i18n';
 import {lensFor,fill,josa,shortTitle} from '@/lib/discussion';
@@ -26,7 +27,7 @@ function Words({stories,selection,loc}:{stories:NewsletterStory[];selection:News
     for(const s of stories){const g=s.glossary?.[round];if(g&&!seen.has(g.term)&&items.length<wordsPerLevel[selection.level]){seen.add(g.term);items.push({...g,from:s});}}
   if(!items.length)return null;
   return <section className="nl-words" aria-label={L('이번 호의 낱말','Words in this issue')}><div className="nl-words-head"><h3>{L('이번 호의 낱말','Words in this issue')} <small>{items.length}</small></h3><p className="nl-think-lead">{loc==='en'?`Picked for the ${levelLabel(selection.level,loc)} level. Cover the meaning and try explaining each word first; it sticks longer.`:`${levelLabel(selection.level)} 수준에 맞춰 골랐어요. 뜻을 가리고 먼저 설명해 본 뒤 확인하면 어휘가 오래 남습니다.`}</p></div>
-    <dl>{items.map(w=><div key={w.term}><dt>{w.term}</dt><dd>{w.meaning}<small>{shortTitle(w.from.title)}</small></dd></div>)}</dl></section>;
+    <dl>{items.map(w=><div key={w.term}><dt>{w.term}</dt><dd>{w.meaning}<small>{shortTitle(w.from.title)}</small></dd></div>)}</dl><p className="nl-words-book"><Link href="/my/words">{L('뜻을 본 낱말은 단어장에 모여요 · 복습하기 →','Words you look up are saved to your word book · Review →')}</Link></p></section>;
 }
 // After reading: fact checks drawn from the leading stories; prompts that widen the view in three
 // directions (out to the world, across stories, back to the reader); and topics to talk over with others.
@@ -99,10 +100,10 @@ export function NewsletterPaper({selection,stories,editorial=false,compact=false
   for(const x of own)tally.set(x.industry,(tally.get(x.industry)||0)+1);
   const artField=[...tally].sort((a,b)=>b[1]-a[1]||selection.industries.indexOf(a[0] as never)-selection.industries.indexOf(b[0] as never))[0]?.[0]||selection.industries[0]||'business';
   // Hard terms are marked once per edition; readers can switch this off in settings.
-  const seen=new Set<string>(),desc=(st:NewsletterStory)=>selection.terms==='off'||!st.description?st.description:withTerms(st.description,st.glossary,seen,st.id);
+  const seen=new Set<string>(),desc=(st:NewsletterStory)=>selection.terms==='off'||!st.description?st.description:withTerms(st.description,st.glossary,seen,st.id,st.href?.startsWith('/article/')?{id:st.href.slice(9).split('?')[0],title:st.title}:undefined);
   const cadence=selection.cadence==='daily'?'Daily':'Weekly';
   return <section className={`nl theme-${selection.theme||'magazine'} accent-${selection.accent||'auto'}${compact?' nl-compact':''}`} aria-label={L('맞춤 뉴스레터 지면','Your personal newsletter')}>
-    <TermFit/><header className="nl-mast">
+    <TermFit/>{selection.terms!=='off'&&<WordCollector lang={loc}/>}<header className="nl-mast">
       <div className="nl-mast-top"><p>{en?(editorial?`Rewritten at the ${levelLabel(selection.level,loc)} level`:'Built from collected sources'):(editorial?`${levelLabel(selection.level)} 수준으로 다시 쓴`:'수집 자료로 엮은')}<br/><b>{en?`${regionLabel(selection,loc)} edition`:`${regionLabel(selection)} 에디션`}</b></p><span>{new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:tz}).format(new Date(issued)).toUpperCase()}</span></div>
       <div className="nl-mast-row"><p className="nl-mast-note">your curiosity,<br/>your own<br/>edition</p><h2 className="nl-title">{selection.name}</h2><p className="nl-vol"><span>{selection.cadence==='daily'?'NO.':'VOL.'}</span>{issueNo(issued,selection.cadence,tz)}</p></div>
       <div className="nl-teasers"><p><span className="nl-teaser-label">{cadence}<br/>Issue</span><b>01</b><span>{fields.join(' · ')||L('나의 분야','Your fields')}</span></p><p><span className="nl-teaser-label">{cadence}<br/>Issue</span><b>02</b><span>{topics.slice(0,4).join(' · ')||day(issued,{year:'numeric',month:'long',day:'numeric',weekday:'long'})}</span></p></div>
