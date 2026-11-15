@@ -26,10 +26,11 @@ function Bars({title,rows,format,caption}:{title:string;rows:{day:string;value:n
   </figure>;
 }
 
-export function Dashboard({o,fb}:{o:OpsData;fb:'open'|'all'}){
+export function Dashboard({o,fb,extra}:{o:OpsData;fb:'open'|'all';extra?:React.ReactNode}){
   const r=o.readers,m=o.mail,f=o.feedback;
   return <main id="main" className="ops-page ops-wide">
     <p className="eyebrow">OPERATIONS · 한국 시간 기준 · 최근 30일</p><h1>운영 대시보드</h1>
+    {extra}
 
     <section id="readers" aria-labelledby="h-readers"><h2 id="h-readers">구독자</h2>
       <div className="ops-tiles">

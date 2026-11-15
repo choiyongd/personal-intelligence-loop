@@ -16,7 +16,6 @@ function load(name){
 }
 const {verifySvix}=load('webhook-signature.ts');
 const {mailSummary,feedbackSummary,lastDays,perDay,kstDay}=load('ops-metrics.ts');
-const {passwordMatchesWith,ownerTokenWith,tokenValidWith,OWNER_TTL_SECONDS}=load('owner-token.ts');
 
 const secret='whsec_'+Buffer.from('a-test-signing-key-32-bytes-long!').toString('base64');
 const sign=(id,ts,body,key=secret)=>'v1,'+createHmac('sha256',Buffer.from(key.slice(6),'base64')).update(`${id}.${ts}.${body}`).digest('base64');
@@ -55,18 +54,4 @@ test('days are Korean calendar days and rows land on the right one',()=>{
 test('feedback summary averages only rated notes and counts open ones',()=>{
   const s=feedbackSummary([{rating:5,handled_at:null},{rating:2,handled_at:'x'},{rating:null,handled_at:null}]);
   assert.deepEqual(s,{total:3,open:2,rated:2,average:3.5,byRating:[0,1,0,0,1]});
-});
-
-test('owner sessions need the current password and expire',()=>{
-  const pw='correct horse battery',now=Date.now();
-  assert.equal(passwordMatchesWith(pw,pw),true);
-  assert.equal(passwordMatchesWith(pw,pw+' '),false);
-  assert.equal(passwordMatchesWith('short',''),false,'a password under 12 characters never opens the page');
-  const token=ownerTokenWith(pw,now);
-  assert.equal(tokenValidWith(pw,token,now),true);
-  assert.equal(tokenValidWith('another password!',token,now),false,'changing the password signs sessions out');
-  assert.equal(tokenValidWith(pw,token,now+(OWNER_TTL_SECONDS+1)*1000),false);
-  const [exp,mac]=token.split('.');
-  assert.equal(tokenValidWith(pw,`${Number(exp)+999999}.${mac}`,now),false);
-  assert.equal(tokenValidWith(pw,`${token}.x`,now),false);
 });

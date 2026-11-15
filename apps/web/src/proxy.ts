@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { configured, authEnv } from './lib/env';
+import { platformAdminEnv, platformAdminCookie } from './lib/platform-admin-env';
 import { REF_COOKIE, REF_COOKIE_DAYS, isReferralCode } from './lib/referral-code';
 
 const authPaths = ['/feed', '/settings', '/saved', '/events', '/publish', '/operations', '/login', '/auth'];
@@ -17,10 +18,13 @@ function referralCode(request: NextRequest) {
 export async function proxy(request: NextRequest) {
   const ref = referralCode(request);
   let response = NextResponse.next({ request });
-  if (configured() && needsAuth(request.nextUrl.pathname)) {
-    const { url, key } = authEnv();
+  const path=request.nextUrl.pathname;
+  const isAdmin=path==='/admin'||path.startsWith('/admin/');
+  const config=isAdmin?platformAdminEnv():configured()&&needsAuth(path)?authEnv():null;
+  if (config) {
+    const { url, key } = config;
     const client = createServerClient(url, key, {
-      cookieOptions: { sameSite: 'lax', secure: process.env.NODE_ENV === 'production', httpOnly: true, path: '/' },
+      cookieOptions: isAdmin?platformAdminCookie:{ sameSite: 'lax', secure: process.env.NODE_ENV === 'production', httpOnly: true, path: '/' },
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll(values) {
@@ -38,7 +42,7 @@ export async function proxy(request: NextRequest) {
 }
 export const config = {
   matcher: [
-    '/feed/:path*', '/settings/:path*', '/saved/:path*', '/events/:path*', '/publish/:path*', '/operations/:path*', '/login', '/auth/:path*',
+    '/feed/:path*', '/settings/:path*', '/saved/:path*', '/events/:path*', '/publish/:path*', '/operations/:path*', '/login', '/auth/:path*', '/admin/:path*',
     '/invite/:path*',
     { source: '/((?!_next/|api/|og/|fonts/|favicon).*)', has: [{ type: 'query', key: 'ref' }] }
   ]
