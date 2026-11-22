@@ -4,7 +4,7 @@ import { configured, authEnv } from './lib/env';
 import { platformAdminEnv, platformAdminCookie } from './lib/platform-admin-env';
 import { REF_COOKIE, REF_COOKIE_DAYS, isReferralCode } from './lib/referral-code';
 
-const authPaths = ['/feed', '/settings', '/saved', '/events', '/publish', '/operations', '/login', '/auth'];
+const authPaths = ['/feed', '/settings', '/saved', '/events', '/publish', '/operations', '/login', '/auth', '/classroom', '/api/v1/education'];
 const needsAuth = (path: string) => authPaths.some(p => path === p || path.startsWith(`${p}/`));
 
 // A friend's invite link (/invite/<code>) or a shared story (?ref=<code>) leaves a 30-day note of who sent it.
@@ -43,7 +43,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/feed/:path*', '/settings/:path*', '/saved/:path*', '/events/:path*', '/publish/:path*', '/operations/:path*', '/login', '/auth/:path*', '/admin/:path*',
-    '/invite/:path*',
+    '/invite/:path*', '/classroom/:path*', '/api/v1/education/:path*',
     { source: '/((?!_next/|api/|og/|fonts/|favicon).*)', has: [{ type: 'query', key: 'ref' }] }
   ]
 };
