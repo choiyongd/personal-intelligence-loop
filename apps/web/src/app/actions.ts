@@ -13,21 +13,24 @@ import {READER_COOKIE} from '@/lib/beta-store';
 const id = z.uuid();
 function value(form:FormData,name:string) {return String(form.get(name)||'');}
 export async function signIn(form:FormData) {
-  if(!configured()) redirect('/login?message=setup');
+  const classroom=value(form,'returnTo')==='/classroom';
+  const loginError=(code:string)=>`/login?message=${code}${classroom?'&next=classroom':''}`;
+  if(!configured()) redirect(loginError('setup'));
   const parsed=z.object({email:z.email(),password:z.string().min(10).max(128)}).safeParse({email:value(form,'email'),password:value(form,'password')});
-  if(!parsed.success) redirect('/login?message=invalid');
+  if(!parsed.success) redirect(loginError('invalid'));
   const client=await supabase();
   const {error}=await client.auth.signInWithPassword(parsed.data);
-  if(error) redirect('/login?message=auth');
-  redirect('/feed');
+  if(error) redirect(loginError('auth'));
+  redirect(classroom?'/classroom':'/feed');
 }
 export async function signUp(form:FormData) {
+  const classroom=value(form,'returnTo')==='/classroom';
   if(!configured()) redirect('/login?message=setup');
   const parsed=z.object({email:z.email(),password:z.string().min(10).max(128)}).safeParse({email:value(form,'email'),password:value(form,'password')});
   if(!parsed.success) redirect('/login?message=invalid');
   const client=await supabase();
   const {error}=await client.auth.signUp({...parsed.data,options:{emailRedirectTo:`${appOrigin()}/auth/callback`}});
-  redirect(error?'/login?message=auth':'/login?message=confirm');
+  redirect(`/login?message=${error?'auth':'confirm'}${classroom?'&next=classroom':''}`);
 }
 export async function signOut() {
   const client=await supabase(); await client.auth.signOut(); redirect('/login');

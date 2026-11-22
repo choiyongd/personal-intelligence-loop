@@ -1,0 +1,12 @@
+.education-page { max-width: 860px; margin-inline: auto; }
+.education-page a:not(.button) { text-decoration: underline; text-underline-offset: .2em; }
+.education-page label { display: block; }
+.education-page textarea { display: block; width: 100%; resize: vertical; background: var(--ink, #141417); color: inherit; font: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.education-page .panel ul, .education-page .panel ol { padding-inline-start: 1.5em; }
+.education-page .panel li { margin-block: .4em; }
+.education-page summary { padding-block: .5em; cursor: pointer; }
+.education-page article + article { margin-top: 1.75rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+.education-reading article { margin-block: 1.5rem; }
+.education-reading h4 { margin-top: 1.1rem; }
+.education-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.15rem; }
+.education-text { white-space: pre-wrap; overflow-wrap: anywhere; }
