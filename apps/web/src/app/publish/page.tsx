@@ -3,12 +3,15 @@ import {context} from '@/lib/data';
 import {newsletterProfile,personalizedStories} from '@/lib/personal-newsletter';
 import {Shell} from '@/components/shell';
 import {NewsletterPaper} from '@/components/newsletter-paper';
+import {ThemeLinks} from '@/components/theme-picker';
 import {personalEditorialStories} from '@/lib/articles';
-import {industryLabel,regionLabel} from '@/lib/newsletter';
-export default async function Publish({searchParams}:{searchParams:Promise<{tenant?:string}>}){
-  const c=await context((await searchParams).tenant),t=c.selected?.tenant_id;
+import {industryLabel,regionLabel,themes} from '@/lib/newsletter';
+export default async function Publish({searchParams}:{searchParams:Promise<{tenant?:string;theme?:string}>}){
+  const query=await searchParams;
+  const c=await context(query.tenant),t=c.selected?.tenant_id;
   if(!t)return <Shell active="/publish"><h1>당신의 첫 뉴스레터를 준비하세요.</h1><Link className="button primary" href="/settings">워크스페이스 만들기 ↗</Link></Shell>;
-  const selection=await newsletterProfile(t);
+  const saved=await newsletterProfile(t);
+  const selection={...saved,theme:themes.find(([id])=>id===query.theme)?.[0]??saved.theme};
   const {stories:collected}=await personalizedStories(t,selection);
   const editorial=collected.length===0;
   const stories=editorial?personalEditorialStories(selection):collected;
@@ -24,6 +27,7 @@ export default async function Publish({searchParams}:{searchParams:Promise<{tena
       <Link className="button secondary" href={'/settings?tenant='+t+'#newsletter-profile'}>관심사 수정 ↗</Link>
     </header>
     <div className="sample-banner"><span>{sourceNote} 이메일 자동 전송은 연결되지 않았습니다.</span></div>
+    <div className="paper-tools newsletter-theme-tools"><ThemeLinks current={selection.theme} hrefFor={theme=>`/publish?tenant=${t}&theme=${theme}`}/></div>
     <NewsletterPaper selection={selection} stories={stories} editorial={editorial}/>
   </Shell>;
 }
