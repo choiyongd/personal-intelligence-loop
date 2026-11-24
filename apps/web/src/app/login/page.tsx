@@ -5,8 +5,29 @@ import {accountsReady} from '@/lib/account';
 import {Notice} from '@/components/notice';
 import {PublicNav} from '@/components/public-nav';
 import {getL} from '@/lib/locale';
+
+function AccountForm({message,classroom=false}:{message?:string;classroom?:boolean}){
+  return <><Notice message={message}/><form action={signIn}>
+    {classroom&&<input type="hidden" name="returnTo" value="/classroom"/>}
+    <label htmlFor="email">이메일</label><input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required maxLength={254}/>
+    <label htmlFor="password">비밀번호</label><input id="password" name="password" type="password" placeholder="10자 이상 입력해 주세요" autoComplete="current-password" required minLength={10} maxLength={128}/>
+    <button className="primary">로그인 <span>→</span></button>
+    <div className="auth-divider"><span>처음 오셨나요?</span></div>
+    <button className="secondary" formAction={signUp}>이메일로 시작하기</button>
+  </form><p className="auth-fine-print">{classroom?'가입했다면 이메일 인증을 마친 뒤 이 화면에서 로그인하세요.':'팀 작업 공간과 수집 자료 연결은 계정이 필요합니다. 가입 후 이메일 인증을 거칩니다.'}</p></>;
+}
+
 export default async function Login({searchParams}:{searchParams:Promise<{message?:string;login?:string;next?:string}>}){
   const [{message,login,next},{loc,L}]=await Promise.all([searchParams,getL()]);
+  if(next==='classroom')return <div className="site-page"><PublicNav active="classroom"/>
+    <main id="main" className="login-layout" lang="ko">
+      <section className="login-story"><p className="eyebrow">루프 교육용 · 베타</p><h1>학급에 로그인</h1>
+        <p className="hero-description">교사는 로그인한 뒤 학급을 만들 수 있어요. 학생은 로그인한 뒤 교사에게 받은 초대 코드를 입력하세요.</p>
+        <Link className="text-link" href="/classroom?sample=1#sample">로그인 없이 예시 수업 보기 →</Link>
+      </section>
+      <section className="auth-form" aria-label="교육용 로그인"><AccountForm message={message} classroom/></section>
+    </main>
+  </div>;
   const loginNotice:Record<string,string>=loc==='en'
     ?{sent:'If that address belongs to a confirmed reader, we sent a sign-in link. Press the button in the mail within 30 minutes.',wait:'We just sent a link. Please try again in a minute.','bad-email':'Please check the email address.',expired:'The link has expired or was already used. Please ask for a new one.',unavailable:'Sign-in by email opens once mail delivery is set up.'}
     :{sent:'메일 주소가 확인된 독자라면 로그인 링크를 보냈어요. 30분 안에 메일의 버튼을 눌러 주세요.',wait:'방금 링크를 보냈어요. 1분 뒤에 다시 시도해 주세요.','bad-email':'메일 주소 형식을 확인해 주세요.',expired:'링크가 만료됐거나 이미 쓰였어요. 다시 요청해 주세요.',unavailable:'메일 로그인은 운영 메일 설정이 끝나면 열립니다.'};
@@ -16,6 +37,6 @@ export default async function Login({searchParams}:{searchParams:Promise<{messag
     <div className="login-reading-note"><span>THE DAILY RITUAL</span><p>{L(<>“더 많이 읽기보다,<br/>나에게 필요한 것을 깊이 읽기.”</>,<>“Not reading more,<br/>but reading what you need, deeply.”</>)}</p><i>{L('나만의 뉴스레터, 나만의 시선.','Your newsletter, your point of view.')}</i></div><Link className="text-link" href="/demo">{L('먼저 둘러보기 →','Take a look first →')}</Link></section>
     <section className="auth-form"><div className="beta-entry" id="beta"><p className="eyebrow">{L('OPEN BETA · 가입 없이','OPEN BETA · NO SIGN-UP')}</p><h2>{L('바로 읽기 시작하세요.','Start reading right away.')}</h2><p className="muted">{L('베타 기간에는 이메일 없이 들어올 수 있어요. 관심사는 이 브라우저에 저장됩니다.','During the beta you can come in without an email. Your interests are saved in this browser.')}</p><form action={startBeta}><label htmlFor="nickname">{L('부를 이름','What should we call you?')} <small>{L('선택','Optional')}</small></label><input id="nickname" name="nickname" placeholder={L('예: 민지','e.g. Alex')} maxLength={20} autoComplete="nickname"/><button className="primary">{L('베타로 바로 시작','Start the beta')} <span>→</span></button></form></div>
     {accountsReady()&&<div className="beta-entry mail-login" id="mail-login"><p className="eyebrow">CONTINUE ON ANOTHER DEVICE</p><h2>{L('메일로 로그인','Sign in by email')}</h2><p className="muted">{L('메일로 받기를 확인한 주소를 넣으면, 다른 기기에서도 내 관심사와 구독을 그대로 이어서 볼 수 있어요.','Enter the address you confirmed for mail delivery to pick up your interests and plan on another device.')}</p>{login&&loginNotice[login]&&<p className="delivery-notice" role="status">{loginNotice[login]}</p>}<form action={mailLogin}><label htmlFor="login-email">{L('메일 주소','Email address')}</label><input id="login-email" name="email" type="email" required maxLength={254} placeholder="you@example.com" autoComplete="email"/><button className="secondary">{L('로그인 링크 받기','Email me a sign-in link')} <span>→</span></button></form></div>}
-    {(loc==='ko'||next==='classroom')&&<details className="account-login" open={Boolean(message)||next==='classroom'}><summary>계정이 있다면 이메일로 로그인</summary><Notice message={message}/><form action={signIn}>{next==='classroom'&&<input type="hidden" name="returnTo" value="/classroom"/>}<label htmlFor="email">이메일</label><input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required maxLength={254}/><label htmlFor="password">비밀번호</label><input id="password" name="password" type="password" placeholder="10자 이상 입력해 주세요" autoComplete="current-password" required minLength={10} maxLength={128}/><button className="primary">로그인 <span>→</span></button><div className="auth-divider"><span>처음 오셨나요?</span></div><button className="secondary" formAction={signUp}>이메일로 시작하기</button></form><p className="auth-fine-print">팀 작업 공간과 수집 자료 연결은 계정이 필요합니다.<br/>가입 후 이메일 인증을 거칩니다.</p></details>}
+    {loc==='ko'&&<details className="account-login" open={Boolean(message)}><summary>계정이 있다면 이메일로 로그인</summary><AccountForm message={message}/></details>}
     </section></main><footer className="site-footer"><span>PERSONAL INTELLIGENCE LOOP</span><span>{L('근거에서 다음 생각까지.','From evidence to your next thought.')} · <a href="/privacy">{L('개인정보 처리방침','Privacy policy')}</a></span></footer></div>;
 }

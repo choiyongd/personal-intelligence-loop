@@ -1,12 +1,135 @@
-.education-page { max-width: 860px; margin-inline: auto; }
+.education-page { max-width: 900px; margin-inline: auto; }
 .education-page a:not(.button) { text-decoration: underline; text-underline-offset: .2em; }
 .education-page label { display: block; }
-.education-page textarea { display: block; width: 100%; resize: vertical; background: var(--ink, #141417); color: inherit; font: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.education-page textarea {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #50505b;
+  border-radius: 8px;
+  background: #141417;
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+.education-page form > button { margin-top: .65rem; }
 .education-page .panel ul, .education-page .panel ol { padding-inline-start: 1.5em; }
 .education-page .panel li { margin-block: .4em; }
 .education-page summary { padding-block: .5em; cursor: pointer; }
 .education-page article + article { margin-top: 1.75rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
-.education-reading article { margin-block: 1.5rem; }
-.education-reading h4 { margin-top: 1.1rem; }
 .education-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.15rem; }
 .education-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.education-beta {
+  max-width: 1080px;
+  padding: clamp(32px, 6vw, 84px) clamp(16px, 5vw, 60px) 72px;
+}
+.education-beta-hero { padding-block-end: clamp(32px, 6vw, 68px); }
+.education-beta-hero .eyebrow { color: #c3c3ff; font: 650 12px var(--sans); letter-spacing: .07em; }
+.education-beta-hero h1 { font-size: clamp(32px, 6vw, 61px); letter-spacing: -.05em; }
+.education-beta-hero > p:not(.eyebrow) { color: var(--muted); }
+.education-beta-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 42px;
+  padding-block: 20px;
+  border-block: 1px solid var(--line);
+}
+.education-beta-roles h2 { margin: 0; font: 700 17px var(--sans); }
+.education-beta-roles p { margin: 7px 0; color: var(--muted); font: 400 14px/1.7 var(--sans); }
+.education-sample { margin-top: 46px; scroll-margin-top: 24px; }
+.education-sample-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 22px; margin-bottom: 18px; }
+.education-sample-head h2 { margin: 0 0 3px; }
+.education-sample-head p { color: var(--muted); margin: 0; font-size: 14px; }
+.education-levels { display: flex; flex-wrap: wrap; gap: 4px; }
+.education-levels a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #dbdbe6;
+  font: 600 13px var(--sans);
+}
+.education-levels a[aria-current=true] { border-color: var(--accent); background: #25253e; color: #f5f4ff; }
+.education-beta + .site-footer { margin-inline: auto; max-width: min(960px, 90vw); }
+
+.education-paper {
+  --classroom-paper: #f6f0e6;
+  --classroom-ink: #211d18;
+  --classroom-accent: #a63c16;
+  --classroom-rule: #c8b8a9;
+  margin-block: 1.25rem;
+  padding: clamp(19px, 6vw, 64px);
+  background: var(--classroom-paper);
+  color: var(--classroom-ink);
+  color-scheme: light;
+  overflow-wrap: anywhere;
+}
+.education-paper :focus-visible { outline-color: var(--classroom-accent); }
+.education-paper-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--classroom-accent);
+  padding-bottom: 12px;
+  font: 650 13px var(--sans);
+}
+.education-paper-mark { font: 750 clamp(30px, 5vw, 42px)/1 var(--serif); letter-spacing: -.075em; }
+.education-teacher-note {
+  max-width: none;
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-inline-start: 2px solid var(--classroom-accent);
+  background: #efe6d8;
+  font: 500 14px/1.65 var(--sans);
+  white-space: pre-wrap;
+}
+.education-reading-head { margin-block: 28px 23px; }
+.education-reading-head h2 { font-size: clamp(24px, 4vw, 34px); margin: 5px 0; }
+.education-reading-head p { margin: 0; color: #595149; font: 500 13px/1.55 var(--sans); }
+.education-reading-section h3 { margin: 18px 0 6px; font-size: 20px; }
+.education-reading-section p { margin-top: 0; line-height: 1.8; }
+.education-reference {
+  border-block: 1px solid var(--classroom-rule);
+  margin-block: 22px;
+  padding-block: 4px;
+  font: 500 14px/1.6 var(--sans);
+}
+.education-reference summary { color: var(--classroom-accent); min-height: 40px; }
+.education-reference ul, .education-reference ol, .education-writing-guide ol, .education-writing-guide ul, .education-discussion ul { padding-inline-start: 1.5em; }
+.education-reference dt { font-weight: 650; }
+.education-reference dd { margin: 0 0 8px; }
+.education-discussion h3, .education-writing-guide h2 { margin: 0 0 8px; }
+.education-writing-guide {
+  margin-top: 24px;
+  padding: clamp(16px, 3vw, 24px);
+  background: #efe6d8;
+  border-top: 1px solid var(--classroom-rule);
+}
+.education-writing-guide details { border-top: 1px solid var(--classroom-rule); }
+.education-writing-guide details h3 { font-size: 16px; }
+.education-exercise { margin-top: 16px; }
+.education-exercise p { color: var(--muted); }
+
+.education-page .panel .education-list { list-style: none; padding: 0; }
+.education-list li { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.education-list li > span { color: var(--muted); flex: none; font-size: 13px; }
+.education-list a { overflow-wrap: anywhere; }
+.education-page .panel .education-starters ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 174px), 1fr));
+  gap: 8px;
+}
+.education-starters li > button { display: block; height: 100%; width: 100%; padding: 12px; border-radius: 8px; text-align: start; }
+.education-starters li > button[aria-pressed=true] { border-color: var(--accent); background: #25253e; }
+.education-starters li > button span { display: block; color: #c3c3ff; font-size: 12px; margin-bottom: 3px; }
+.education-progress dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-family: var(--sans); }
+.education-progress dl > div { border-top: 1px solid var(--line); padding-block: 8px; }
+.education-progress dt { color: var(--muted); font-size: 13px; }
+.education-progress dd { margin: 3px 0 0; font-size: clamp(16px, 3vw, 24px); font-weight: 700; }
+@media (max-width: 540px) { .education-beta-roles { grid-template-columns: 1fr; } }

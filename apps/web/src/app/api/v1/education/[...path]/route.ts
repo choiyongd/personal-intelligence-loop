@@ -133,6 +133,20 @@ async function handle(request:Request,{params}:RouteContext){
       return Response.json(checked(await client.from('education_lessons').select(lessonFields).eq('id',lessonId).single()));
     }
 
+    if(method==='GET'&&action==='progress'&&!studentId){
+      requireTeacher();
+      if(!lesson.published_at)throw new ApiError(404,'lesson_not_published');
+      const submitted=()=>client.from('education_writings').select('student_id',{count:'exact',head:true})
+        .eq('class_id',classId).eq('lesson_id',lessonId).not('submitted_at','is',null);
+      const [students,writings,reviewed]=await Promise.all([
+        client.from('education_students').select('user_id',{count:'exact',head:true}).eq('class_id',classId),
+        submitted(),
+        submitted().not('feedback_at','is',null),
+      ]);
+      for(const result of [students,writings,reviewed])checked(result);
+      return Response.json({enrolled:students.count??0,submitted:writings.count??0,reviewed:reviewed.count??0});
+    }
+
     if(action==='submissions'){
       requireTeacher();
       if(method==='GET'&&!studentId){

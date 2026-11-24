@@ -43,7 +43,25 @@ export const lessonInput=z.object({
   teacher_note:z.string().trim().max(1000).optional(),
   writing_prompt:z.string().trim().min(1).max(600).optional(),
 });
-type LessonInput=z.infer<typeof lessonInput>;
+export type LessonInput=z.infer<typeof lessonInput>;
+
+export const educationStarterLessons=[
+  {id:'space',label:'과학 · 우주',input:{
+    title:'누리호는 왜 여러 단으로 나뉠까?',article_ids:['space-explainer'],reading_level:'upper_elementary',
+    teacher_note:'5분 읽기 · 5분 그림과 함께 설명하기 · 10분 글쓰기',
+    writing_prompt:'누리호가 여러 단으로 나뉘는 이유를 친구에게 설명해 보세요. 기사에서 알게 된 사실과 내가 만든 비유를 한 가지씩 넣어 보세요.',
+  }},
+  {id:'ai',label:'기술 · 사회',input:{
+    title:'학교에서 AI를 쓸 때 어떤 규칙이 필요할까?',article_ids:['ai-explainer'],reading_level:'middle_school',
+    teacher_note:'8분 개인 읽기 · 7분 짝 토론 · 15분 근거를 넣어 글쓰기',
+    writing_prompt:'우리 학교에서 AI를 쓸 때 지켜야 할 규칙 하나를 제안하세요. 기사에서 찾은 근거를 쓰고, 그 규칙에 반대하는 친구의 의견에도 답해 보세요.',
+  }},
+  {id:'climate',label:'환경 · 정책',input:{
+    title:'기후 위험에 대비할 때 무엇을 먼저 바꿔야 할까?',article_ids:['climate-explainer'],reading_level:'high_school',
+    teacher_note:'10분 기사 읽기 · 10분 출처 비교 · 20분 입장문 쓰기',
+    writing_prompt:'학교나 지역사회가 우선 대비해야 할 기후 위험 하나를 제안하세요. 출처 두 곳의 자료를 비교하고, 어떤 새 근거가 들어오면 결론을 바꿀지 설명하세요.',
+  }},
+] satisfies {id:string;label:string;input:LessonInput}[];
 
 export function buildLesson(articles:Article[],level:ReadingLevel,input:LessonInput){
   const rubric=levels[level];
@@ -79,3 +97,5 @@ export function buildLesson(articles:Article[],level:ReadingLevel,input:LessonIn
     },
   };
 }
+
+export type LessonContent=ReturnType<typeof buildLesson>;
