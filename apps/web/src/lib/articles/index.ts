@@ -119,7 +119,7 @@ export function articleStory(raw:Article,level:Level,loc:Locale='ko'):Newsletter
   return {
     id:a.id,title:a.title,description:a.dek,industry:a.industry,topics:[a.topic],countries:a.regions.filter(r=>r!=='GLOBAL'),
     type:a.type,source:publishers.slice(0,2).join(' · ')+(publishers.length>2?(loc==='en'?` +${publishers.length-2} more`:` 외 ${publishers.length-2}곳`):'')+(a.live?(loc==='en'?' · AI-written from official releases':' · 공식 발표 기반 AI 작성'):''),date:`${a.asOf}T00:00:00+09:00`,
-    href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,thoughts:a.thoughts,easy:a.pages[0]?.easy||undefined,deep:a.deepDive?.heading,glossary:a.glossary,
+    href:`/article/${a.id}?level=${level}`,sourceCount:a.sources.length,questions:a.questions,thoughts:a.thoughts,easy:a.pages[0]?.easy||undefined,excerpt:a.pages[0]?.paragraphs[0],deep:a.deepDive?.heading,glossary:a.glossary,
     evidence:a.sources.map(src=>({source:src.publisher,url:src.url,title:src.title})),
   };
 }

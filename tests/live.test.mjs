@@ -27,6 +27,27 @@ const {citationProblems}=load(`${lib}/live/check.ts`);
 const {feeds}=load(`${lib}/live/feeds.ts`);
 const articles=load(`${lib}/articles/index.ts`);
 const {defaultSelection}=load(`${lib}/newsletter.ts`);
+const {newsletterPhoto}=load(`${lib}/newsletter-design.ts`);
+const {renderIssueEmail}=load(`${lib}/issue-email.ts`);
+
+test('the email follows the chosen edition design and credits a photo for the lead article',()=>{
+  const ai=articles.articleById('ai-explainer');
+  const wafer=articles.articleById('semiconductor-explainer');
+  const input={articles:[ai,wafer],origin:'https://example.test',dateLabel:'11월 24일',readerName:'테스트',
+    unsubscribeUrl:'https://example.test/unsubscribe',archiveUrl:'https://example.test/archive'};
+  const render=theme=>renderIssueEmail({...input,selection:{...defaultSelection,theme}});
+  const photo=newsletterPhoto('magazine',ai.id);
+  assert.notEqual(photo.src,newsletterPhoto('magazine',wafer.id).src);
+  assert.equal(newsletterPhoto('night',ai.id).src,photo.src,'article keeps its own photo when the theme changes');
+  assert.equal(newsletterPhoto('night','unreviewed-story'),undefined);
+  const night=render('night');
+  assert.match(night.html,/bgcolor="#10151d"/);
+  assert.ok(night.html.includes(photo.src)&&night.html.includes(photo.source));
+  assert.ok(night.html.includes(photo.credit)&&night.html.includes(photo.licenseUrl));
+  assert.ok(night.html.includes(input.unsubscribeUrl)&&night.text.includes(input.unsubscribeUrl));
+  assert.doesNotMatch(render('minimal').html,/<img\b/);
+  assert.match(render('bento').html,/bgcolor="#eee8f5"/);
+});
 
 test('reads RSS items with CDATA, entities and dates',()=>{
   const xml=`<rss><channel><title>x</title><item><title><![CDATA[Fed &amp; rates: decision]]></title><link>https://www.federalreserve.gov/newsevents/pressreleases/monetary20261029a.htm</link>

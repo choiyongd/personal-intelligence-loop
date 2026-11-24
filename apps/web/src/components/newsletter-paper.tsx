@@ -1,12 +1,15 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import type {CSSProperties} from 'react';
 import {TermFit} from '@/components/term-fit';
 import {WordCollector} from '@/components/word-collector';
 import {hotBasis} from '@/lib/articles/hot';
 import {lx,intlLocale,type Locale} from '@/lib/i18n';
 import {lensFor,fill,josa,shortTitle} from '@/lib/discussion';
 import {withTerms} from './terms';
-import {CoverArt} from './cover-art';
-import {wordsPerLevel,continentOf,contentLabels,contentLabel,countryName,industryName,levelLabel,regionLabel,topicLabels,type NewsletterSelection,type NewsletterStory} from '@/lib/newsletter';
+import {newsletterPalettes,newsletterPhoto} from '@/lib/newsletter-design';
+import {wordsPerLevel,continentOf,contentLabel,countryName,industryName,levelLabel,regionLabel,type NewsletterSelection,type NewsletterStory} from '@/lib/newsletter';
+import styles from './newsletter-paper.module.css';
 
 function date(raw:string|Date,opts:Intl.DateTimeFormatOptions={month:'long',day:'numeric'},loc:Locale='ko',tz='Asia/Seoul'){return new Intl.DateTimeFormat(intlLocale(loc),{...opts,timeZone:tz}).format(new Date(raw));}
 function usableUrl(raw?:string){try{const u=new URL(raw||'');return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:undefined;}catch{return undefined;}}
@@ -17,7 +20,10 @@ function Hot({story,loc}:{story:NewsletterStory;loc:Locale}){return story.hot?<s
 function Category({story,loc}:{story:NewsletterStory;loc:Locale}){return <span className="nl-category"><Hot story={story} loc={loc}/>{contentLabel(story.type,loc)}{story.countries.length>0&&<> · {story.countries.slice(0,3).map(c=>countryName(c,loc)).join(', ')}</>}</span>;}
 function Meta({story,loc}:{story:NewsletterStory;loc:Locale}){const en=loc==='en',d=date(story.date,undefined,loc);return <p className="nl-meta"><span>{story.source||(en?'Source pending':'출처 확인')}</span>{story.sourceCount?<span>{en?`${story.sourceCount} sources`:`출처 ${story.sourceCount}개`}</span>:null}<time dateTime={story.date}>{story.href?(en?`As of ${d}`:`${d} 기준`):d}</time></p>;}
 function Evidence({story,loc}:{story:NewsletterStory;loc:Locale}){
-  return story.evidence.length>0?<details className="nl-evidence"><summary>{loc==='en'?`Show ${story.evidence.length} sources`:`근거 출처 ${story.evidence.length}개 보기`}</summary><ul>{story.evidence.map((e,i)=><li key={`${e.source}-${i}`}><a href={usableUrl(e.url)} target="_blank" rel="noopener noreferrer">{e.source} · {e.title} ↗</a></li>)}</ul></details>:null;
+  return story.evidence.length>0?<details className={styles.evidence}><summary>{loc==='en'?`Show ${story.evidence.length} sources`:`근거 출처 ${story.evidence.length}개 보기`}</summary><ol>{story.evidence.map((e,i)=>{
+    const link=usableUrl(e.url);
+    return <li key={`${e.source}-${i}`}>{link?<a href={link} target="_blank" rel="noopener noreferrer">{e.source} · {e.title} ↗</a>:<>{e.source} · {e.title}</>}</li>;
+  })}</ol></details>:null;
 }
 // A word list for the edition: hard terms from the stories, more of them for readers who chose the intro level.
 function Words({stories,selection,loc}:{stories:NewsletterStory[];selection:NewsletterSelection;loc:Locale}){
@@ -78,53 +84,79 @@ function Questions({stories,loc}:{stories:NewsletterStory[];loc:Locale}){
       <p className="nl-talk-opener">{en?`An opener · “Did you see the story on ${t}? What do you think?”`:`대화를 여는 한마디 · “‘${t}’ 소식 봤어? 너는 어떻게 생각해?”`}</p></article>)}</div></div>}
   </section>;
 }
-// Issue number on the masthead: day of month for daily editions, ISO week for weekly ones.
-function issueNo(raw:string|Date,cadence:string,tz='Asia/Seoul'){
-  const d=new Date(new Date(raw).toLocaleString('en-US',{timeZone:tz}));
-  if(cadence==='daily') return String(d.getDate()).padStart(2,'0');
-  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7));
-  return String(Math.ceil(((+t-Date.UTC(t.getUTCFullYear(),0,1))/864e5+1)/7)).padStart(2,'0');
-}
 export function NewsletterPaper({selection,stories,editorial=false,compact=false,issuedAt,loc=selection.lang}:{selection:NewsletterSelection;stories:NewsletterStory[];editorial?:boolean;compact?:boolean;issuedAt?:string;loc?:Locale}){
-  const L=lx(loc),en=loc==='en',tz=selection.tz||'Asia/Seoul',day=(raw:string|Date,opts?:Intl.DateTimeFormatOptions)=>date(raw,opts,loc,tz);
-  // Each story appears once: the cover story, two headlines beside it, up to three cards, then the reading list.
-  const lead=stories[0],heads=stories.slice(1,3),cards=stories.slice(3,6),more=stories.slice(6,14);
-  const count=(type:keyof typeof contentLabels)=>stories.filter(s=>s.type===type).length;
-  const countries=[...new Set(stories.flatMap(s=>s.countries))];
-  const fields=selection.industries.map(id=>industryName(id,loc));
-  const topics=topicLabels(selection,loc);
+  const L=lx(loc);
+  const [lead,...rest]=stories;
+  const heads=rest.slice(0,2),cards=rest.slice(2,5),more=rest.slice(5);
+  const theme=selection.theme||'magazine';
   const issued=issuedAt||new Date();
-  // The cover image stands for the edition, so it follows the field most of the reader's own stories belong to
-  // (hot picks open every world edition and would make all covers look alike).
-  const own=stories.filter(x=>!x.hot&&x.industry!=='unknown'),tally=new Map<string,number>();
-  for(const x of own)tally.set(x.industry,(tally.get(x.industry)||0)+1);
-  const artField=[...tally].sort((a,b)=>b[1]-a[1]||selection.industries.indexOf(a[0] as never)-selection.industries.indexOf(b[0] as never))[0]?.[0]||selection.industries[0]||'business';
-  // Hard terms are marked once per edition; readers can switch this off in settings.
-  const seen=new Set<string>(),desc=(st:NewsletterStory)=>selection.terms==='off'||!st.description?st.description:withTerms(st.description,st.glossary,seen,st.id,st.href?.startsWith('/article/')?{id:st.href.slice(9).split('?')[0],title:st.title}:undefined);
-  const cadence=selection.cadence==='daily'?'Daily':'Weekly';
-  return <section className={`nl theme-${selection.theme||'magazine'} accent-${selection.accent||'auto'}${compact?' nl-compact':''}`} aria-label={L('맞춤 뉴스레터 지면','Your personal newsletter')}>
-    <TermFit/>{selection.terms!=='off'&&<WordCollector lang={loc}/>}<header className="nl-mast">
-      <div className="nl-mast-top"><p>{en?(editorial?`Rewritten at the ${levelLabel(selection.level,loc)} level`:'Built from collected sources'):(editorial?`${levelLabel(selection.level)} 수준으로 다시 쓴`:'수집 자료로 엮은')}<br/><b>{en?`${regionLabel(selection,loc)} edition`:`${regionLabel(selection)} 에디션`}</b></p><span>{new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:tz}).format(new Date(issued)).toUpperCase()}</span></div>
-      <div className="nl-mast-row"><p className="nl-mast-note">your curiosity,<br/>your own<br/>edition</p><h2 className="nl-title">{selection.name}</h2><p className="nl-vol"><span>{selection.cadence==='daily'?'NO.':'VOL.'}</span>{issueNo(issued,selection.cadence,tz)}</p></div>
-      <div className="nl-teasers"><p><span className="nl-teaser-label">{cadence}<br/>Issue</span><b>01</b><span>{fields.join(' · ')||L('나의 분야','Your fields')}</span></p><p><span className="nl-teaser-label">{cadence}<br/>Issue</span><b>02</b><span>{topics.slice(0,4).join(' · ')||day(issued,{year:'numeric',month:'long',day:'numeric',weekday:'long'})}</span></p></div>
+  const issuedLabel=date(issued,{year:'numeric',month:'short',day:'numeric'},loc,selection.tz||'Asia/Seoul');
+  const {paper,ink,muted,rule,accent,card,cardAlt}=newsletterPalettes[theme];
+  const palette={'--sheet':paper,'--ink':ink,'--muted':muted,'--rule':rule,'--accent':accent,'--card':card,'--card-alt':cardAlt} as CSSProperties;
+  const photo=lead&&newsletterPhoto(theme,lead.id);
+  const excerpt=lead&&(selection.level==='intro'?lead.easy:lead.excerpt);
+  const prompt=lead?.thoughts?.[0]??lead?.questions?.[0];
+  const seen=new Set<string>();
+  const description=(story:NewsletterStory)=>{
+    if(selection.terms==='off'||!story.description)return story.description;
+    const entry=story.href?.startsWith('/article/')?{id:story.href.slice(9).split('?')[0],title:story.title}:undefined;
+    return withTerms(story.description,story.glossary,seen,story.id,entry);
+  };
+  const renderRelated=(story:NewsletterStory)=><article key={story.id}>
+    <Category story={story} loc={loc}/>
+    <h4><StoryTitle story={story}/></h4>
+    {!compact&&(story.hot?<p>{story.hot.reason}</p>:story.description&&<p>{description(story)}</p>)}
+  </article>;
+
+  return <section className={`nl theme-${theme} accent-${selection.accent||'auto'} ${styles.paper}${compact?' '+styles.compact:''}`} style={palette} aria-label={L('맞춤 뉴스레터 지면','Your personal newsletter')}>
+    <TermFit/>{selection.terms!=='off'&&<WordCollector lang={loc}/>}
+    <header className={styles.masthead}>
+      <span className={styles.wordmark}>loop.</span>
+      <div className={styles.issue}>
+        <h2>{selection.name}</h2>
+        {!compact&&<p data-cadence={selection.cadence}><time dateTime={new Date(issued).toISOString()}>{issuedLabel}</time> · {regionLabel(selection,loc)}</p>}
+      </div>
     </header>
     {lead?<>
-      <div className="nl-cover">
-        <article className="nl-lead"><CoverArt industry={artField} seed={`${stories.map(x=>x.id).join("")}${new Date(issued).toISOString().slice(0,10)}`} label={en?`Cover image · ${industryName(artField,loc)}`:`대표 이미지 · ${industryName(artField)}`} loc={loc}/><div className="nl-lead-body"><p className="nl-label">COVER STORY</p><Category story={lead} loc={loc}/><h3><StoryTitle story={lead}/></h3>{lead.hot&&!compact&&<p className="nl-hot-reason">{L('왜 화제인가','Why it matters')} · {lead.hot.reason}</p>}</div></article>
-        <div className="nl-heads">
-          <p className="nl-heads-label">HEADLINE NEWS</p>
-          {heads.map(s=><article key={s.id}><Category story={s} loc={loc}/><h4><StoryTitle story={s}/></h4>{!compact&&(s.hot?<p className="nl-hot-reason">{s.hot.reason}</p>:s.description&&<p>{desc(s)}</p>)}</article>)}
-          {!compact&&<dl className="nl-colophon"><div><dt>{L('발행일','Issued')}</dt><dd>{day(issued,{year:'numeric',month:'2-digit',day:'2-digit'})}</dd></div><div><dt>{L('구성','Contents')}</dt><dd>{en?`${stories.length} stories`:`읽을거리 ${stories.length}편`}</dd></div><div><dt>{L('지역','Region')}</dt><dd>{countries.length?countries.slice(0,3).map(c=>countryName(c,loc)).join(' · '):L('전 세계','Worldwide')}</dd></div></dl>}
+      <div className={`${styles.front}${heads.length?'':' '+styles.solo}`}>
+        <header className={styles.headline}>
+          <Category story={lead} loc={loc}/>
+          <h3><StoryTitle story={lead}/></h3>
+          {lead.description&&<p>{description(lead)}</p>}
+        </header>
+        <div className={styles.feature}>
+          {photo&&<figure className={styles.art}>
+            <Image src={photo.src} width={960} height={720} unoptimized alt={L(photo.ko,photo.en)}/>
+            <figcaption>{L(photo.ko,photo.en)} · <a href={photo.creditUrl??photo.source}>{photo.credit}</a> · <a href={photo.licenseUrl??photo.source}>{photo.license}</a>{photo.creditUrl&&<> · <a href={photo.source}>{L('사진 원본','Original photo')}</a></>}</figcaption>
+          </figure>}
+          {!compact&&<div className={styles.leadCopy}>
+            {lead.hot&&<p><strong>{L('왜 화제인가','Why it matters')}</strong> · {lead.hot.reason}</p>}
+            {excerpt&&excerpt!==lead.description&&<p>{excerpt}</p>}
+            {selection.level==='expert'&&lead.deep&&<p><strong>{L('심화 장','Deep dive')}</strong> · {lead.deep}</p>}
+            <Meta story={lead} loc={loc}/>
+            {lead.href&&<Link className={styles.read} href={lead.href}>{L('전문 읽기 →','Read the full story →')}</Link>}
+          </div>}
         </div>
+        {heads.length>0&&<section className={styles.related} aria-label={L('관련 기사','Related stories')}>{heads.map(renderRelated)}</section>}
       </div>
-      {!compact&&<section className="nl-story" aria-label={L('커버 스토리 요약','Cover story summary')}>{lead.description&&<p className="nl-deck">{desc(lead)}</p>}{selection.level==='intro'&&lead.easy&&<p className="nl-easy"><b>{L('쉽게 말하면','In plain words')}</b>{lead.easy}</p>}{selection.level==='expert'&&lead.deep&&<p className="nl-easy nl-deep"><b>{L('심화 장','Deep dive')}</b>{lead.deep}</p>}<Meta story={lead} loc={loc}/>{lead.href&&<Link className="nl-read" href={lead.href}>{L('전문 읽기 →','Read the full story →')}</Link>}<Evidence story={lead} loc={loc}/></section>}
-      {cards.length>0&&!compact&&<section className="nl-cards" aria-label={L('함께 읽을 이야기','More to read')}><h3 className="nl-section-title">{L('함께 읽을 이야기','More to read')}</h3><div>{cards.map((s,i)=><article key={s.id}><b className="nl-card-no">{String(i+4).padStart(2,'0')}</b><Category story={s} loc={loc}/><h4><StoryTitle story={s}/></h4>{s.hot?<p className="nl-hot-reason">{s.hot.reason}</p>:s.description&&<p>{desc(s)}</p>}</article>)}</div></section>}
-      {!compact&&<div className="nl-body">
-        <section className="nl-more" aria-label={L('더 읽을거리','Further reading')}><h3 className="nl-section-title">{L('더 읽을거리','Further reading')}</h3>{more.length>0?<ul>{more.map(s=><li key={s.id}><h4><StoryTitle story={s}/></h4><Category story={s} loc={loc}/></li>)}</ul>:<p className="nl-quiet">{en?`This issue holds the ${stories.length} stories above. Pick more topics to widen it.`:`이번 호의 읽을거리는 위의 ${stories.length}편입니다. 주제를 더 고르면 지면이 넓어집니다.`}</p>}</section>
-        <aside className="nl-aside" aria-label={L('이번 호의 구성','In this issue')}><h3>{L('이번 호의 구성','In this issue')}</h3><p className="nl-figure"><b>{stories.length}</b>{L('편의 읽을거리',' stories')}</p><dl>{selection.contentTypes.map(type=><div key={type}><dt>{contentLabel(type,loc)}</dt><dd>{count(type)}</dd></div>)}<div><dt>{L('다룬 지역','Regions')}</dt><dd>{countries.length?countries.slice(0,4).map(c=>countryName(c,loc)).join(' · '):L('전 세계','Worldwide')}</dd></div></dl>{stories.some(s=>s.hot)&&<p className="nl-basis">{L('전 세계 에디션은 ‘세계의 화제’ 2편을 꼭 담습니다.','Worldwide editions always carry two “Global hot” stories.')} {hotBasis(loc)}</p>}</aside>
+      {!compact&&<div className={styles.sources}>
+        <Evidence story={lead} loc={loc}/>
+        {stories.some(story=>story.hot)&&<details className={styles.evidence}><summary>{L('세계의 화제 선정 기준','How Global hot is selected')}</summary><p>{hotBasis(loc)}</p></details>}
       </div>}
-      {!compact&&selection.terms!=='off'&&<Words stories={stories} selection={selection} loc={loc}/>}{!compact&&<Questions stories={stories} loc={loc}/>}
-    </>:<div className="nl-empty"><span>NO STORIES YET</span><h3>{L(<>이 관심사를 채울 읽을거리를<br/>기다리고 있어요.</>,<>We are still waiting for stories<br/>to fill these interests.</>)}</h3><p>{editorial?L('선택한 분야·주제·유형에 맞는 해설 기사가 아직 없습니다. 읽을거리 유형이나 주제를 넓혀 보세요.',`There are no explainers yet for these fields, topics and types${en?' in English':''}. Try widening the reading types or topics.`):L('선택한 주제·국가·유형에 맞는 수집 자료가 없습니다. 지역 미확인 자료는 특정 국가 지면에서 제외합니다.','No collected sources match these topics, countries and types. Sources with an unknown region are left out of country editions.')}</p></div>}
-    {!compact&&<footer className="nl-foot"><b>loop.</b><span>{editorial?L('공개 자료를 다시 쓴 해설입니다. 숫자와 날짜는 원문에서 함께 확인하세요.','Explainers rewritten from public sources. Check numbers and dates against the originals.'):L('원문과 출처를 확인하며 읽는 나의 뉴스레터.','My newsletter, read with its sources in hand.')}</span></footer>}
+      {!compact&&prompt&&<div className={styles.prompt}><strong>{L('생각거리','Think it over')}</strong><p>{prompt}</p></div>}
+      {!compact&&cards.length>0&&<section className={styles.extra} aria-label={L('함께 읽을 이야기','More to read')}>
+        <h3>{L('함께 읽을 이야기','More to read')}</h3><div>{cards.map(renderRelated)}</div>
+      </section>}
+      {!compact&&more.length>0&&<section className={styles.index} aria-label={L('더 읽을거리','Further reading')}>
+        <h3>{L('더 읽을거리','Further reading')}</h3>
+        <ul>{more.map(story=><li key={story.id}><h4><StoryTitle story={story}/></h4><Category story={story} loc={loc}/></li>)}</ul>
+      </section>}
+      {!compact&&selection.terms!=='off'&&<Words stories={stories} selection={selection} loc={loc}/>}
+      {!compact&&<Questions stories={stories} loc={loc}/>}
+    </>:<div className={styles.empty}>
+      <h3>{L('이 관심사를 채울 읽을거리를 기다리고 있어요.','We are still waiting for stories to fill these interests.')}</h3>
+      <p>{editorial?L('선택한 분야·주제·유형에 맞는 해설 기사가 아직 없습니다. 읽을거리 유형이나 주제를 넓혀 보세요.','There are no explainers yet for these fields, topics and types. Try widening the reading types or topics.'):L('선택한 주제·국가·유형에 맞는 수집 자료가 없습니다. 지역 미확인 자료는 특정 국가 지면에서 제외합니다.','No collected sources match these topics, countries and types. Sources with an unknown region are left out of country editions.')}</p>
+    </div>}
+    {!compact&&<footer className={styles.footer}>{editorial?L('공개 자료를 다시 쓴 해설입니다. 숫자와 날짜는 원문에서 함께 확인하세요.','Explainers rewritten from public sources. Check numbers and dates against the originals.'):L('각 기사에서 원문과 출처를 확인할 수 있습니다.','Original coverage and sources are linked from each story.')}</footer>}
   </section>;
 }

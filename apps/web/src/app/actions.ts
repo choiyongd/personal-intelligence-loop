@@ -97,7 +97,7 @@ export async function saveNewsletterProfile(form:FormData){
     industry:s.industries[0],industries:s.industries,subtopics:s.subtopics,scope:s.scope,country:s.countries[0]||'US',countries:s.countries.length?s.countries:['US'],
     content_types:s.contentTypes,name:s.name,cadence:s.cadence,level:s.level,updated_at:new Date().toISOString()}, {onConflict:'tenant_id,user_id'});
   if(error)redirect(`/settings?tenant=${tenant}&message=save`);
-  revalidatePath('/publish');redirect(`/publish?tenant=${tenant}`);
+  revalidatePath('/publish');redirect(`/publish?tenant=${tenant}&theme=${s.theme}`);
 }
 
 const betaCookie={path:'/',maxAge:60*60*24*90,sameSite:'lax' as const,httpOnly:true,secure:process.env.VERCEL==='1'};

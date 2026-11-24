@@ -98,10 +98,10 @@ export function inLocale(s:NewsletterSelection,loc:Locale):NewsletterSelection{
 }
 // Newsletter looks a reader can pick; the markup is shared and each theme is a stylesheet layer.
 export const themes=[
-  ['magazine','매거진','종이 질감과 큰 제호, 주황 포인트'],
-  ['minimal','미니멀','흰 바탕과 가는 선, 글에만 집중'],
-  ['bento','벤토','둥근 카드 격자와 부드러운 색면'],
-  ['night','나이트','어두운 바탕과 선명한 강조색'],
+  ['magazine','매거진','아이보리 지면, 명조 제목과 주황 구분선'],
+  ['minimal','미니멀','사진 없이 글을 읽는 흰색 다단 지면'],
+  ['bento','벤토','대표 기사와 라벤더·세이지 관련 기사'],
+  ['night','나이트','짙은 남색 지면, 밝은 글과 민트 강조'],
 ] as const;
 export type Theme=typeof themes[number][0];
 // Point colours a reader can lay over any newsletter look or article style; "auto" keeps the look's own colour.
@@ -155,7 +155,7 @@ export const levelsEn:Record<Level,[string,string]>={
   expert:['Expert','At a specialist level. A deep-dive chapter adds methods, debates and limits.'],
 };
 export const contentLabelsEn={article:'Article',research:'Research',news:'News'} as const;
-export const themesEn:Record<Theme,[string,string]>={magazine:['Magazine','Paper texture, a big nameplate, orange accents'],minimal:['Minimal','White page and fine rules, nothing but the words'],bento:['Bento','Rounded card grid with soft color fields'],night:['Night','Dark page with vivid highlights']};
+export const themesEn:Record<Theme,[string,string]>={magazine:['Magazine','Ivory paper, serif headlines and orange rules'],minimal:['Minimal','A white, text-only page set in columns'],bento:['Bento','A lead story and lavender and sage sidebars'],night:['Night','Ink-blue paper, light type and mint accents']};
 export const accentsEn:Record<Accent,string>={auto:'Default',violet:'Violet',coral:'Coral',emerald:'Emerald',rose:'Rose',amber:'Amber',graphite:'Graphite'};
 export const articleStylesEn:Record<ArticleStyle,[string,string]>={studio:['Studio','Ink-dark header like the site, white page'],paper:['Paper','Warm paper tone with ink-black type'],night:['Night','A dark page that is easy on the eyes']};
 export const planLabel=(p:Plan,loc:Locale='ko')=>loc==='en'?(p==='free'?'Free':'Subscriber'):plans[p].label;
@@ -215,7 +215,7 @@ export type NewsletterStory = {
   id:string; title:string; description?:string; industry:IndustryId|'unknown'; topics:string[]; countries:string[];
   type:keyof typeof contentLabels; source:string; date:string; url?:string; eventId?:string; tenant?:string; evidence:{source:string;url:string;title:string}[];
   href?:string; sourceCount?:number; questions?:string[]; thoughts?:string[]; hot?:{rank:number;reason:string};
-  easy?:string; deep?:string; glossary?:{term:string;meaning:string}[];
+  easy?:string; excerpt?:string; deep?:string; glossary?:{term:string;meaning:string}[];
 };
 function matchesTerm(text:string,term:string){
   const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');

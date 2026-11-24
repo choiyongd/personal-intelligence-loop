@@ -38,3 +38,17 @@ test('beta entry needs no account and the explainer cites its sources',async()=>
   assert.match(html,/참고한 자료/);assert.match(html,/id="source-1"/);assert.match(html,/심화/);
   assert.equal((await fetch(`${origin}/article/no-such-piece`)).status,404);
 });
+test('the same newsletter works across four layouts and its photo follows the lead story',async()=>{
+  const path=`${origin}/newsletter?industries=technology&topics=ai&scope=kr`;
+  for(const theme of ['magazine','minimal','bento','night']){
+    const response=await fetch(`${path}&theme=${theme}`);
+    const html=await response.text();
+    assert.equal(response.status,200);
+    assert.ok(html.includes(`theme-${theme}`));
+    assert.match(html,/href="\/article\/ai-explainer\?level=practitioner"/);
+    assert.match(html,/근거 출처 \d+개 보기/);
+    const photo=/<img[^>]+src="https:\/\/thumb\.wikimedia\.org\/[^"]+"/.test(html);
+    assert.equal(photo,theme!=='minimal');
+    if(photo)assert.match(html,/Profpcde/);
+  }
+});
