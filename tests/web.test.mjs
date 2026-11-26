@@ -52,3 +52,25 @@ test('the same newsletter works across four layouts and its photo follows the le
     if(photo)assert.match(html,/Profpcde/);
   }
 });
+
+test('the education beta lets guests compare reading levels without exposing a class',async()=>{
+  const home=await fetch(`${origin}/classroom`,{redirect:'manual'});
+  assert.equal(home.status,200);
+  assert.match(await home.text(),/루프 교육용 · 베타/);
+  for(const [level,label,range] of [['upper_elementary','초등 고학년','100~250'],['middle_school','중학생','250~500'],['high_school','고등학생','500~900']]){
+    const sample=await fetch(`${origin}/classroom?sample=1&level=${level}`);
+    assert.equal(sample.status,200);
+    const html=await sample.text();
+    assert.match(html,new RegExp(`${label} 읽기 자료`));
+    assert.ok(html.includes(range));
+    assert.match(html,/근거 출처/);
+    assert.match(html,/연습한 글은 저장되지 않습니다/);
+  }
+  const privateClass=await fetch(`${origin}/classroom?class=22222222-2222-4222-8222-222222222222`,{redirect:'manual'});
+  assert.equal(privateClass.status,307);
+  assert.equal(privateClass.headers.get('location'),'/login?next=classroom');
+  const login=await fetch(`${origin}/login?next=classroom`);
+  const loginHtml=await login.text();
+  assert.match(loginHtml,/학급에 로그인/);
+  assert.match(loginHtml,/name="returnTo" value="\/classroom"/);
+});
