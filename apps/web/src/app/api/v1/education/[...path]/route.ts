@@ -143,7 +143,9 @@ async function handle(request:Request,{params}:RouteContext){
         submitted(),
         submitted().not('feedback_at','is',null),
       ]);
-      for(const result of [students,writings,reviewed])checked(result);
+      checked(students);
+      checked(writings);
+      checked(reviewed);
       return Response.json({enrolled:students.count??0,submitted:writings.count??0,reviewed:reviewed.count??0});
     }
 
